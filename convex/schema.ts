@@ -38,6 +38,7 @@ export default defineSchema({
     ),
     notes: v.optional(v.string()),
     link: v.optional(v.string()),
+    dashboardLink: v.optional(v.string()),
     lastUpdated: v.optional(v.number()),
   }).index("by_userId", ["userId"]),
 });

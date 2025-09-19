@@ -6,30 +6,28 @@ import { api } from "../convex/_generated/api";
 export default function ImportModal() {
   const [importText, setImportText] = useState("");
   const [importFile, setImportFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
 
-  const importFromFile = useAction(api.import.importFromFile);
+  const importFromText = useAction(api.import.importFromText);
 
-  const handleFileImport = async () => {
+  const handleFileImport = async (modalId: string) => {
     if (!importFile) return;
+  };
 
-    try {
-      // Convert file to ArrayBuffer
-      const arrayBuffer = await importFile.arrayBuffer();
-
-      // Call Convex action
-      const result = await importFromFile({
-        file: new Uint8Array(arrayBuffer),
-      });
-
-      console.log("Import result:", result);
-    } catch (error) {
-      console.error("Import failed:", error);
+  const handleTextImport = async (modalId: string) => {
+    if (!importText) return;
+    setIsImporting(true);
+    const result = await importFromText({ data: importText });
+    if (result.success) {
+      setIsImporting(false);
+      setImportText("");
+      (document.getElementById(modalId) as HTMLDialogElement)?.close();
     }
   };
 
   return (
     <div className="fixed bottom-0 right-0">
-      <div className="fab">
+      <div className="fab gap-4">
         {/* a focusable div with tabIndex is necessary to work on all browsers. role="button" is necessary for accessibility */}
         <div
           tabIndex={0}
@@ -40,10 +38,11 @@ export default function ImportModal() {
         </div>
 
         {/* buttons that show up when FAB is open */}
-        <div>
+        <div className="">
           Import from file
           <button
             className="btn btn-lg btn-square"
+            disabled
             onClick={() =>
               (
                 document.getElementById("my_modal_1") as HTMLDialogElement
@@ -98,7 +97,7 @@ export default function ImportModal() {
             <button
               className="btn btn-success w-full btn-soft"
               disabled={!importFile}
-              onClick={handleFileImport}
+              onClick={() => handleFileImport("my_modal_1")}
             >
               Import
             </button>
@@ -136,7 +135,17 @@ export default function ImportModal() {
             >
               <ClipboardPaste className="w-4 h-4" />
             </button>
-            <button className="btn btn-success w-full btn-soft">Import</button>
+            <button
+              className="btn btn-success w-full btn-soft"
+              onClick={() => handleTextImport("my_modal_2")}
+              disabled={isImporting}
+            >
+              {isImporting ? (
+                <span className="loading loading-spinner loading-sm"></span>
+              ) : (
+                <span>Import</span>
+              )}
+            </button>
           </div>
         </div>
       </dialog>
