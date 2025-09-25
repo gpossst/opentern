@@ -14,6 +14,7 @@ import {
 import { z } from "zod";
 import ImportModal from "@/components/ImportModal";
 import ApplicationList from "@/components/ApplicationList";
+import SuggestionsList from "@/components/SuggestionsList";
 
 export default function Home() {
   const [showingList, setShowingList] = useState(false);
@@ -21,7 +22,7 @@ export default function Home() {
     <>
       <main className="p-8 flex flex-col gap-8">
         <ImportModal />
-        <ListView />
+        {showingList ? <ListView /> : <SuggestionsList />}
         <div className="absolute top-4 right-4 flex flex-col items-center gap-2">
           <SignOutButton />
           <ViewToggle

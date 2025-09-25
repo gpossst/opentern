@@ -17,6 +17,7 @@ import type * as applications from "../applications.js";
 import type * as auth from "../auth.js";
 import type * as http from "../http.js";
 import type * as import_ from "../import.js";
+import type * as suggestions from "../suggestions.js";
 import type * as unions from "../unions.js";
 import type * as users from "../users.js";
 
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   http: typeof http;
   import: typeof import_;
+  suggestions: typeof suggestions;
   unions: typeof unions;
   users: typeof users;
 }>;

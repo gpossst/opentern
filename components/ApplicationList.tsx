@@ -5,8 +5,9 @@ import { X, Link as LinkIcon, Search } from "lucide-react";
 import Link from "next/link";
 import { statusUnion } from "@/convex/unions";
 import { Infer } from "convex/values";
-import { useEffect, useState, useMemo, memo, useCallback } from "react";
+import { useEffect, useState, useMemo, memo, useCallback, useRef } from "react";
 import Fuse from "fuse.js";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 // Utility function for status colors - defined outside component to avoid recreation
 const getStatusColor = (status: string) => {
@@ -36,6 +37,7 @@ const getStatusButtonClass = (status: string) => {
 export default function ApplicationList() {
   const applications = useQuery(api.applications.getApplications);
   const [searchQuery, setSearchQuery] = useState("");
+  const parentRef = useRef<HTMLDivElement>(null);
 
   // Memoize filtered applications to avoid recalculating on every render
   const filteredApplications = useMemo(() => {
@@ -50,23 +52,57 @@ export default function ApplicationList() {
     return results.map((result) => result.item);
   }, [applications, searchQuery]);
 
+  const virtualizer = useVirtualizer({
+    count: filteredApplications.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 100, // Estimated height of each application item
+    overscan: 5, // Number of items to render outside the visible area
+  });
+
   return (
     <div>
       <ApplicationFilter
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
       />
-      <ul className="list bg-base-100 rounded-box shadow-md">
-        {filteredApplications.map((application: Doc<"applications">) => (
-          <ApplicationListItem
-            key={application._id.toString()}
-            application={application}
-          />
-        ))}
-        {filteredApplications.length === 0 && (
-          <li className="list-row p-4 text-center">No results found</li>
+      <div
+        ref={parentRef}
+        className="h-[600px] overflow-auto bg-base-100 rounded-box shadow-md"
+        style={{
+          contain: "strict",
+        }}
+      >
+        {filteredApplications.length === 0 ? (
+          <div className="p-4 text-center">No results found</div>
+        ) : (
+          <div
+            style={{
+              height: `${virtualizer.getTotalSize()}px`,
+              width: "100%",
+              position: "relative",
+            }}
+          >
+            {virtualizer.getVirtualItems().map((virtualItem) => {
+              const application = filteredApplications[virtualItem.index];
+              return (
+                <div
+                  key={application._id.toString()}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: `${virtualItem.size}px`,
+                    transform: `translateY(${virtualItem.start}px)`,
+                  }}
+                >
+                  <ApplicationListItem application={application} />
+                </div>
+              );
+            })}
+          </div>
         )}
-      </ul>
+      </div>
     </div>
   );
 }
@@ -78,7 +114,7 @@ const ApplicationListItem = memo(function ApplicationListItem({
 }) {
   return (
     <div>
-      <li className="list-row p-4 hover:bg-base-200 transition-colors flex flex-row justify-between items-center">
+      <div className="p-4 hover:bg-base-200 transition-colors flex flex-row justify-between items-center border-b border-base-300">
         <div
           className="flex items-center gap-2 flex-1 my-1 cursor-pointer"
           onClick={() => {
@@ -93,7 +129,7 @@ const ApplicationListItem = memo(function ApplicationListItem({
           <div className="text-sm opacity-70">{application.title}</div>
         </div>
         <StatusDropdown application={application} />
-      </li>
+      </div>
       <dialog id={application._id.toString()} className="modal">
         <div className="modal-box min-w-5xl bg-base-300">
           <div className="flex flex-row justify-between items-center">

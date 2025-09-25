@@ -40,5 +40,22 @@ export default defineSchema({
     link: v.optional(v.string()),
     dashboardLink: v.optional(v.string()),
     lastUpdated: v.optional(v.number()),
+    suggestionId: v.optional(v.id("suggestions")),
   }).index("by_userId", ["userId"]),
+  suggestions: defineTable({
+    company: v.string(),
+    title: v.string(),
+    link: v.optional(v.string()),
+    location: v.optional(v.string()),
+    source: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_createdAt", ["createdAt"])
+    .index("by_company", ["company"])
+    .index("by_source_created", ["source", "createdAt"])
+    .searchIndex("search_title", {
+      searchField: "title",
+      filterFields: ["source"],
+      staged: false,
+    }),
 });
