@@ -1,12 +1,21 @@
-import { File, ClipboardPaste, CloudUpload, X } from "lucide-react";
+import {
+  File,
+  ClipboardPaste,
+  CloudUpload,
+  X,
+  Crown,
+  ArrowRight,
+} from "lucide-react";
 import { useState } from "react";
-import { useAction } from "convex/react";
+import { useAction, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
+import Link from "next/link";
 
 export default function ImportModal() {
   const [importText, setImportText] = useState("");
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const user = useQuery(api.users.getUser);
 
   const importFromText = useAction(api.import.importFromText);
 
@@ -24,6 +33,109 @@ export default function ImportModal() {
       (document.getElementById(modalId) as HTMLDialogElement)?.close();
     }
   };
+
+  if (user?.sub !== "pro") {
+    return (
+      <>
+        <div
+          tabIndex={0}
+          role="button"
+          className="btn btn-lg btn-square btn-warning btn-soft fixed bottom-4 right-4"
+          onClick={() =>
+            (
+              document.getElementById("pro_feature_modal") as HTMLDialogElement
+            )?.showModal()
+          }
+        >
+          <CloudUpload />
+        </div>
+
+        {/* Pro Feature Dialog */}
+        <dialog id="pro_feature_modal" className="modal">
+          <div className="modal-box max-w-md">
+            <div className="flex flex-col items-center text-center gap-6">
+              {/* Crown Icon */}
+              <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full">
+                <Crown className="w-8 h-8 text-primary" />
+              </div>
+
+              {/* Title */}
+              <div>
+                <h3 className="font-bold text-2xl mb-2">Pro Feature</h3>
+                <p className="text-base-content/70">
+                  Import functionality is available with our Pro plan
+                </p>
+              </div>
+
+              {/* Features List */}
+              <div className="w-full">
+                <div className="bg-base-200 rounded-lg p-4 space-y-3">
+                  <h4 className="font-semibold text-sm text-base-content/80 mb-3">
+                    Pro includes:
+                  </h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="badge badge-success badge-sm">✓</div>
+                      <span>Import from clipboard</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="badge badge-success badge-sm">✓</div>
+                      <span>Import from file (coming soon)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="badge badge-success badge-sm">✓</div>
+                      <span>Suggestions</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="badge badge-success badge-sm">✓</div>
+                      <span>Support for the team</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pricing Info */}
+              <div className="bg-primary/10 rounded-lg p-4 w-full">
+                <div className="text-2xl font-bold text-primary mb-1">
+                  $1/month
+                </div>
+                <div className="text-sm text-base-content/70">
+                  Start your free trial today
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 w-full">
+                <form method="dialog" className="flex-1">
+                  <button className="btn btn-outline w-full">
+                    Maybe Later
+                  </button>
+                </form>
+                <Link href="/pricing" className="flex-1">
+                  <button
+                    className="btn btn-primary w-full"
+                    onClick={() =>
+                      (
+                        document.getElementById(
+                          "pro_feature_modal",
+                        ) as HTMLDialogElement
+                      )?.close()
+                    }
+                  >
+                    View Pricing
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button>close</button>
+          </form>
+        </dialog>
+      </>
+    );
+  }
 
   return (
     <div className="fixed bottom-0 right-0">
