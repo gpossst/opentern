@@ -37,7 +37,7 @@ export default function SuggestionsList() {
   const virtualizer = useVirtualizer({
     count: results.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 80, // Estimated height of each item
+    estimateSize: () => 100, // Match the actual item height
     overscan: 5, // Number of items to render outside the visible area
   });
 
@@ -102,7 +102,12 @@ export default function SuggestionsList() {
                     transform: `translateY(${virtualItem.start}px)`,
                   }}
                 >
-                  <SuggestionListItem suggestion={suggestion} />
+                  <div
+                    ref={virtualizer.measureElement}
+                    data-index={virtualItem.index}
+                  >
+                    <SuggestionListItem suggestion={suggestion} />
+                  </div>
                 </div>
               );
             })}
@@ -127,7 +132,7 @@ function SuggestionListItem({
   };
 
   return (
-    <div className="p-4 hover:bg-base-200 transition-colors flex flex-row justify-between items-center border-b border-base-300">
+    <div className="p-4 hover:bg-base-200 transition-colors flex flex-row justify-between items-center min-h-[100px]">
       <div className="flex items-center gap-2 flex-1 my-1 justify-between cursor-pointer">
         <div className="flex gap-1 items-center">
           <div className="font-semibold">{suggestion.company}</div>

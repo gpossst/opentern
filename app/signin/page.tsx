@@ -10,7 +10,10 @@ export default function SignIn() {
     <div className="flex flex-col gap-8 w-96 mx-auto h-screen justify-center items-center">
       <p>Log in to see the numbers</p>
       <div>
-        <button className="btn bg-white text-black border-[#e5e5e5]">
+        <button
+          className="btn bg-white text-black border-[#e5e5e5]"
+          onClick={() => signIn("google")}
+        >
           <svg
             aria-label="Google logo"
             width="16"

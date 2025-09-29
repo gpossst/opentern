@@ -20,9 +20,11 @@ export default defineSchema({
     phoneVerificationTime: v.optional(v.number()),
     isAnonymous: v.optional(v.boolean()),
     sub: v.optional(v.union(v.literal("basic"), v.literal("pro"))),
+    customerId: v.optional(v.string()),
   })
     .index("email", ["email"])
-    .index("phone", ["phone"]),
+    .index("phone", ["phone"])
+    .index("customerId", ["customerId"]),
   applications: defineTable({
     userId: v.id("users"),
     company: v.string(),

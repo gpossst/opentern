@@ -40,7 +40,6 @@ const ApplicationsResponseSchema = z.object({
 export const importFromText = action({
   args: { data: v.string() },
   handler: async (ctx, args) => {
-    console.log("Importing from text");
     const userId = await getAuthUserId(ctx);
 
     if (userId === null) {
@@ -48,7 +47,6 @@ export const importFromText = action({
     }
 
     try {
-      console.log("Generating object");
       const { object } = await generateObject({
         model: groq("openai/gpt-oss-20b"),
         schema: ApplicationsResponseSchema,
@@ -71,8 +69,6 @@ ${args.data}
 
 Return the applications in the specified JSON format.`,
       });
-
-      console.log(`Generated ${object.applications.length} applications`);
 
       if (object.applications.length > 0) {
         const validStatuses = [

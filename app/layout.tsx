@@ -28,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <ConvexAuthNextjsServerProvider>
-      <html lang="en" data-theme="night">
+      <html lang="en" data-theme="dim">
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >

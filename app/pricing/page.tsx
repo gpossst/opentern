@@ -1,4 +1,26 @@
+"use client";
+import { redirect } from "next/navigation";
+import { useState } from "react";
+
 export default function PricingPage() {
+  const [loadingProButton, setLoadingProButton] = useState(false);
+  const handleButtonPress = () => {
+    setLoadingProButton(true);
+    fetch("/api/payment", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.text())
+      .then((data) => {
+        redirect(data);
+      })
+      .finally(() => {
+        setLoadingProButton(false);
+      });
+  };
+
   return (
     <div className="min-h-screen bg-base-100">
       {/* Hero Section */}
@@ -92,8 +114,16 @@ export default function PricingPage() {
               </div>
 
               <div className="card-actions justify-center">
-                <button className="btn btn-secondary w-full">
-                  Start Pro Trial
+                <button
+                  disabled={loadingProButton}
+                  onClick={handleButtonPress}
+                  className="btn btn-accent w-full"
+                >
+                  {loadingProButton ? (
+                    <span className="loading loading-spinner loading-xs text-bg-base-200"></span>
+                  ) : (
+                    "Get Pro"
+                  )}
                 </button>
               </div>
             </div>
