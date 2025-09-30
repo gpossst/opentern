@@ -26,7 +26,6 @@ export default function SuggestionsList() {
     source: "",
   });
   const parentRef = useRef<HTMLDivElement>(null);
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const { results, status, loadMore } = usePaginatedQuery(
     api.suggestions.getSuggestions,
@@ -37,7 +36,7 @@ export default function SuggestionsList() {
   const virtualizer = useVirtualizer({
     count: results.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 100, // Match the actual item height
+    estimateSize: () => 60, // Match the actual item height
     overscan: 5, // Number of items to render outside the visible area
   });
 
@@ -66,53 +65,57 @@ export default function SuggestionsList() {
   }, [status, handleLoadMore]);
 
   return (
-    <div className="flex flex-col gap-4 min-w-4xl mx-auto">
+    <div className="flex gap-4 pr-4">
       <SuggestionsFilter
         filterOptions={filterOptions}
         setFilterOptions={setFilterOptions}
       />
-      <div
-        ref={parentRef}
-        className="h-[600px] overflow-auto bg-base-100 rounded-box shadow-md"
-        style={{
-          contain: "strict",
-        }}
-      >
-        {results.length === 0 ? (
-          <div className="p-4 text-center">No results found</div>
-        ) : (
-          <div
-            style={{
-              height: `${virtualizer.getTotalSize()}px`,
-              width: "100%",
-              position: "relative",
-            }}
-          >
-            {virtualizer.getVirtualItems().map((virtualItem) => {
-              const suggestion = results[virtualItem.index];
-              return (
-                <div
-                  key={suggestion._id}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: `${virtualItem.size}px`,
-                    transform: `translateY(${virtualItem.start}px)`,
-                  }}
-                >
+      <div className="flex flex-col gap-4 w-full">
+        <h2 className="text-lg font-semibold">Suggestions</h2>
+        <div
+          ref={parentRef}
+          className="h-[42rem] overflow-auto bg-base-100 rounded-box shadow-md"
+          style={{
+            contain: "strict",
+          }}
+        >
+          {results.length === 0 ? (
+            <div className="p-4 text-center">No results found</div>
+          ) : (
+            <div
+              style={{
+                height: `${virtualizer.getTotalSize()}px`,
+                width: "100%",
+                position: "relative",
+              }}
+            >
+              {virtualizer.getVirtualItems().map((virtualItem) => {
+                const suggestion = results[virtualItem.index];
+                return (
                   <div
-                    ref={virtualizer.measureElement}
-                    data-index={virtualItem.index}
+                    key={suggestion._id}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: `${virtualItem.size}px`,
+                      transform: `translateY(${virtualItem.start}px)`,
+                      zIndex: 1000 - virtualItem.index, // Higher items get higher z-index
+                    }}
                   >
-                    <SuggestionListItem suggestion={suggestion} />
+                    <div
+                      ref={virtualizer.measureElement}
+                      data-index={virtualItem.index}
+                    >
+                      <SuggestionListItem suggestion={suggestion} />
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -131,50 +134,52 @@ function SuggestionListItem({
     addApplication({ suggestionId: suggestion._id });
   };
 
+  const handleOpenJobDescription = () => {
+    window.open(suggestion.link, "_blank");
+  };
+
   return (
-    <div className="p-4 hover:bg-base-200 transition-colors flex flex-row justify-between items-center min-h-[100px]">
-      <div className="flex items-center gap-2 flex-1 my-1 justify-between cursor-pointer">
-        <div className="flex gap-1 items-center">
+    <div className="relative">
+      <div
+        onClick={handleOpenJobDescription}
+        className="p-4 cursor-pointer rounded-md hover:bg-base-200 transition-colors flex flex-row justify-between items-center min-h-[60px]"
+      >
+        <div className="flex items-center gap-2 flex-1 my-1 cursor-pointer">
           <div className="font-semibold">{suggestion.company}</div>
           <div className="text-sm opacity-70">{suggestion.title}</div>
-          <div className="text-sm opacity-70">
-            {suggestion.location && suggestion.location.length < 20 ? (
-              `(${suggestion.location})`
-            ) : suggestion.location && suggestion.location.length >= 20 ? (
-              <div
-                className="tooltip tooltip-top"
-                data-tip={suggestion.location}
-              >
-                <PinIcon className="w-4 h-4 text-primary" />
-              </div>
-            ) : (
-              ""
-            )}
-          </div>
+          {suggestion.location && (
+            <div className="text-sm opacity-70">
+              {suggestion.location.length < 20 ? (
+                `(${suggestion.location})`
+              ) : (
+                <div
+                  className="tooltip tooltip-top"
+                  data-tip={suggestion.location}
+                >
+                  <PinIcon className="w-4 h-4 text-primary" />
+                </div>
+              )}
+            </div>
+          )}
         </div>
-        <div className="text-sm opacity-70">
+        <div className="flex items-center gap-2">
           {suggestion.source &&
             repos.find((repo) => repo.owner === suggestion.source) && (
               <Link
                 href={`https://github.com/${suggestion.source}/${repos.find((repo) => repo.owner === suggestion.source)?.repo}/`}
                 target="_blank"
                 className="text-primary btn btn-square btn-sm"
+                onClick={(e) => e.stopPropagation()}
               >
                 <Github className="w-4 h-4" />
               </Link>
             )}
-          {suggestion.link && (
-            <Link
-              href={suggestion.link}
-              target="_blank"
-              className="text-primary btn btn-square btn-sm"
-            >
-              <LinkIcon className="w-4 h-4" />
-            </Link>
-          )}
           <button
             className="btn btn-square btn-sm"
-            onClick={handleAddApplication}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAddApplication();
+            }}
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -253,52 +258,55 @@ const SuggestionsFilter = memo(function SuggestionsFilter({
   );
 
   return (
-    <div className="flex max-w-4xl bg-neutral rounded-md p-2 gap-2">
-      <div className="relative" ref={dropdownRef}>
-        <button
-          className="btn btn-soft btn-accent border"
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        >
-          Company
-        </button>
-        {isDropdownOpen && (
-          <div className="absolute top-full left-0 mt-1 bg-base-100 rounded-box shadow-lg border border-base-300 z-50 w-100 p-2">
-            <label
-              htmlFor="companySearch"
-              className="input input-bordered w-full input-sm"
-            >
-              <input
-                type="text"
-                placeholder="Search by company"
-                id="companySearch"
-                value={companySearch}
-                onChange={(e) => setCompanySearch(e.target.value)}
-              />
-            </label>
-            <div className="max-h-128 overflow-y-auto p-2 gap-1 flex flex-col">
-              {filteredCompanies?.map((company) => (
-                <button
-                  key={company}
-                  className={`w-full flex items-center gap-2 text-wrap btn btn-soft btn-sm justify-start ${filterOptions.company.includes(company) ? "btn-primary" : ""}`}
-                  onClick={() => handleCompanySelect(company)}
-                >
-                  {company}
-                </button>
-              ))}
+    <div className="flex flex-col gap-2">
+      <h2 className="text-lg font-semibold">Filter</h2>
+      <div className="flex-col gap-2">
+        <div className="relative flex-1" ref={dropdownRef}>
+          <button
+            className="btn btn-soft btn-accent border w-full"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          >
+            Company
+          </button>
+          {isDropdownOpen && (
+            <div className="absolute top-full left-0 mt-1 bg-base-100 rounded-box shadow-lg border border-base-300 z-50 w-[20em] p-2">
+              <label
+                htmlFor="companySearch"
+                className="input input-bordered w-full input-sm"
+              >
+                <input
+                  type="text"
+                  placeholder="Search by company"
+                  id="companySearch"
+                  value={companySearch}
+                  onChange={(e) => setCompanySearch(e.target.value)}
+                />
+              </label>
+              <div className="max-h-128 overflow-y-auto p-2 gap-1 flex flex-col">
+                {filteredCompanies?.map((company) => (
+                  <button
+                    key={company}
+                    className={`w-full flex items-center gap-2 text-wrap btn btn-soft btn-sm justify-start ${filterOptions.company.includes(company) ? "btn-primary" : ""}`}
+                    onClick={() => handleCompanySelect(company)}
+                  >
+                    {company}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+        <label htmlFor="search" className="input input-bordered flex-1 mt-2">
+          <Search className="w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Search by title"
+            id="search"
+            value={filterOptions.search}
+            onChange={handleSearchChange}
+          />
+        </label>
       </div>
-      <label htmlFor="search" className="input input-bordered w-full">
-        <Search className="w-4 h-4" />
-        <input
-          type="text"
-          placeholder="Search by title"
-          id="search"
-          value={filterOptions.search}
-          onChange={handleSearchChange}
-        />
-      </label>
     </div>
   );
 });
