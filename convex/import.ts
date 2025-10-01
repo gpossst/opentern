@@ -1,40 +1,207 @@
 import { action, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { z } from "zod";
-import Groq from "groq-sdk";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "./_generated/api";
 
-const ApplicationsResponseSchema = z.object({
-  applications: z
-    .array(
-      z.object({
-        company: z.string().min(1).describe("The company name"),
-        title: z.string().min(1).describe("The job title or position"),
-        link: z
-          .string()
-          .optional()
-          .nullable()
-          .describe("Job posting URL if available"),
-        notes: z
-          .string()
-          .optional()
-          .nullable()
-          .describe("Additional notes about the application"),
-        status: z
-          .string()
-          .optional()
-          .nullable()
-          .describe("Application status if mentioned"),
-        dashboardLink: z
-          .string()
-          .optional()
-          .nullable()
-          .describe("Dashboard URL if available"),
-      }),
-    )
-    .describe("Array of job applications found in the text"),
-});
+// Interface for parsed application data
+interface ParsedApplication {
+  company: string;
+  title: string;
+  link?: string;
+  notes?: string;
+  status?: string;
+}
+
+// Column mapping interface
+interface ColumnMapping {
+  company?: number;
+  title?: number;
+  status?: number;
+  link?: number;
+  date?: number;
+  notes?: number;
+}
+
+// Function to detect column headers and map them to our fields
+function detectColumns(headerRow: string): ColumnMapping {
+  const columns = headerRow.toLowerCase().split("\t");
+  const mapping: ColumnMapping = {};
+
+  columns.forEach((col, index) => {
+    const normalizedCol = col.trim().toLowerCase();
+
+    // Map various possible column names to our fields
+    if (
+      normalizedCol.includes("company") ||
+      normalizedCol.includes("employer")
+    ) {
+      mapping.company = index;
+    } else if (
+      normalizedCol.includes("role") ||
+      normalizedCol.includes("position") ||
+      normalizedCol.includes("title") ||
+      normalizedCol.includes("job")
+    ) {
+      mapping.title = index;
+    } else if (
+      normalizedCol.includes("status") ||
+      normalizedCol.includes("state")
+    ) {
+      mapping.status = index;
+    } else if (
+      normalizedCol.includes("link") ||
+      normalizedCol.includes("url") ||
+      normalizedCol.includes("dashboard")
+    ) {
+      mapping.link = index;
+    } else if (
+      normalizedCol.includes("date") ||
+      normalizedCol.includes("applied")
+    ) {
+      mapping.date = index;
+    } else if (
+      normalizedCol.includes("note") ||
+      normalizedCol.includes("comment") ||
+      normalizedCol.includes("remark")
+    ) {
+      mapping.notes = index;
+    }
+  });
+
+  return mapping;
+}
+
+// Function to normalize status values
+function normalizeStatus(status: string): string {
+  if (!status) return "interested";
+
+  const normalized = status.toLowerCase().trim();
+
+  // Map various status formats to our standard statuses
+  if (normalized.includes("submitted") || normalized.includes("applied")) {
+    return "applied";
+  } else if (normalized.includes("rejected")) {
+    return "rejected";
+  } else if (normalized.includes("test") || normalized.includes("assessment")) {
+    return "assessment";
+  } else if (normalized.includes("interview")) {
+    return "interviewed";
+  } else if (normalized.includes("offer")) {
+    return "offered";
+  } else if (normalized.includes("cancel")) {
+    return "archived";
+  }
+
+  return "interested";
+}
+
+// Function to check if a string is a URL
+function isUrl(str: string): boolean {
+  try {
+    new URL(str);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Main parsing function
+function parseApplicationData(data: string): ParsedApplication[] {
+  const lines = data.trim().split("\n");
+  if (lines.length < 2) {
+    throw new Error("Data must contain at least a header row and one data row");
+  }
+
+  // Detect column mapping from header row
+  const columnMapping = detectColumns(lines[0]);
+
+  // Validate that we have at least company and title columns
+  if (
+    columnMapping.company === undefined ||
+    columnMapping.title === undefined
+  ) {
+    throw new Error(
+      "Could not detect Company and Role/Title columns. Please ensure your data has these columns.",
+    );
+  }
+
+  const applications: ParsedApplication[] = [];
+
+  // Parse each data row
+  for (let i = 1; i < lines.length; i++) {
+    const row = lines[i].trim();
+    if (!row) continue; // Skip empty rows
+
+    const columns = row.split("\t");
+
+    // Extract basic required fields
+    const company = columns[columnMapping.company]?.trim();
+    const title = columns[columnMapping.title]?.trim();
+
+    if (!company || !title) {
+      console.warn(`Skipping row ${i + 1}: missing company or title`);
+      continue;
+    }
+
+    // Extract optional fields
+    const status =
+      columnMapping.status !== undefined
+        ? columns[columnMapping.status]?.trim()
+        : undefined;
+    const link =
+      columnMapping.link !== undefined
+        ? columns[columnMapping.link]?.trim()
+        : undefined;
+    const notes =
+      columnMapping.notes !== undefined
+        ? columns[columnMapping.notes]?.trim()
+        : undefined;
+    const date =
+      columnMapping.date !== undefined
+        ? columns[columnMapping.date]?.trim()
+        : undefined;
+
+    // Determine if link is a job posting or dashboard link
+    let jobLink: string | undefined;
+
+    if (link && isUrl(link)) {
+      // If it looks like a dashboard URL (contains common dashboard keywords)
+      if (
+        link.includes("dashboard") ||
+        link.includes("profile") ||
+        link.includes("candidate") ||
+        link.includes("applicant") ||
+        link.includes("myworkday") ||
+        link.includes("oraclecloud") ||
+        link.includes("workday") ||
+        link.includes("userHome")
+      ) {
+      } else {
+        jobLink = link;
+      }
+    }
+
+    // Build notes from available information
+    let combinedNotes = "";
+    if (date) {
+      combinedNotes += `Applied: ${date}`;
+    }
+    if (notes && notes !== date) {
+      if (combinedNotes) combinedNotes += " | ";
+      combinedNotes += notes;
+    }
+
+    applications.push({
+      company,
+      title,
+      link: jobLink,
+      notes: combinedNotes || undefined,
+      status: normalizeStatus(status || ""),
+    });
+  }
+
+  return applications;
+}
 
 export const importFromText = action({
   args: { data: v.string() },
@@ -45,10 +212,10 @@ export const importFromText = action({
       throw new Error("Client is not authenticated!");
     }
 
-    // Validate input length to prevent token limit issues
-    if (args.data.length > 50000) {
+    // Validate input length
+    if (args.data.length > 100000) {
       throw new Error(
-        "Input text is too long. Please limit to 50,000 characters.",
+        "Input text is too long. Please limit to 100,000 characters.",
       );
     }
 
@@ -57,118 +224,12 @@ export const importFromText = action({
     }
 
     try {
-      // Initialize Groq client
-      const groq = new Groq({
-        apiKey: process.env.GROQ_API_KEY,
-      });
+      // Parse the data using our custom parser
+      const parsedApplications = parseApplicationData(args.data);
 
-      const prompt = `You are a job application parser. Extract job applications from the following text and return ONLY valid JSON.
+      console.log("Parsed applications:", parsedApplications.length);
 
-INSTRUCTIONS:
-1. Look for company names and job titles
-2. Extract any URLs, status information, or notes
-3. Return ONLY the JSON object, no other text
-4. If no applications found, return: {"applications": []}
-
-EXAMPLES of what to extract:
-- "Google - Software Engineer" → {"company": "Google", "title": "Software Engineer"}
-- "Applied to Meta for Product Manager role" → {"company": "Meta", "title": "Product Manager", "status": "applied"}
-- "Amazon AWS Solutions Architect - https://amazon.com/job" → {"company": "Amazon", "title": "AWS Solutions Architect", "link": "https://amazon.com/job"}
-
-REQUIRED JSON FORMAT (return exactly this structure):
-{
-  "applications": [
-    {
-      "company": "Company Name",
-      "title": "Job Title",
-      "link": "URL if available or null",
-      "notes": "Additional notes if any or null",
-      "status": "Application status if mentioned or null",
-      "dashboardLink": "Dashboard URL if available or null"
-    }
-  ]
-}
-
-Text to parse:
-${args.data}
-
-Return ONLY the JSON object:`;
-
-      const chatCompletion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a JSON parser. Always return valid JSON only. Do not include any explanatory text or markdown formatting.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        model: "openai/gpt-oss-20b",
-        temperature: 0,
-        reasoning_effort: "low",
-        response_format: { type: "json_object" },
-      });
-
-      const responseContent = chatCompletion.choices[0]?.message?.content;
-      if (!responseContent) {
-        throw new Error("No response content received from Groq");
-      }
-
-      console.log("Raw Groq response:", responseContent);
-
-      // Clean up the response content - remove any markdown formatting
-      let cleanedContent = responseContent.trim();
-
-      // Remove markdown code blocks if present
-      if (cleanedContent.startsWith("```json")) {
-        cleanedContent = cleanedContent
-          .replace(/^```json\s*/, "")
-          .replace(/\s*```$/, "");
-      } else if (cleanedContent.startsWith("```")) {
-        cleanedContent = cleanedContent
-          .replace(/^```\s*/, "")
-          .replace(/\s*```$/, "");
-      }
-
-      // Parse the JSON response
-      let object;
-      try {
-        object = JSON.parse(cleanedContent);
-      } catch (parseError) {
-        console.error("Failed to parse JSON response:");
-        console.error("Original response:", responseContent);
-        console.error("Cleaned response:", cleanedContent);
-        console.error("Parse error:", parseError);
-
-        // Try to extract JSON from the response if it's embedded in text
-        const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          try {
-            object = JSON.parse(jsonMatch[0]);
-            console.log("Successfully extracted JSON from embedded text");
-          } catch (secondParseError) {
-            console.error("Failed to parse extracted JSON:", secondParseError);
-            throw new Error(
-              `Invalid JSON response from Groq. Raw response: ${responseContent.substring(0, 500)}...`,
-            );
-          }
-        } else {
-          throw new Error(
-            `Invalid JSON response from Groq. Raw response: ${responseContent.substring(0, 500)}...`,
-          );
-        }
-      }
-
-      // Validate the response against our schema
-      const validatedObject = ApplicationsResponseSchema.parse(object);
-
-      console.log("Parsed applications:", validatedObject.applications.length);
-      console.log("Raw object:", validatedObject);
-
-      if (validatedObject.applications.length > 0) {
+      if (parsedApplications.length > 0) {
         const validStatuses = [
           "interested",
           "applied",
@@ -179,26 +240,20 @@ Return ONLY the JSON object:`;
           "archived",
         ] as const;
 
-        // Filter out applications with missing required fields
-        const validApplications = validatedObject.applications.filter(
-          (application) => {
-            return (
-              application.company &&
-              typeof application.company === "string" &&
-              application.company.trim().length > 0 &&
-              application.title &&
-              typeof application.title === "string" &&
-              application.title.trim().length > 0
-            );
-          },
-        );
+        // Filter out applications with missing required fields and validate status
+        const validApplications = parsedApplications.filter((application) => {
+          return (
+            application.company &&
+            application.company.trim().length > 0 &&
+            application.title &&
+            application.title.trim().length > 0
+          );
+        });
 
         const applicationsToInsert = validApplications.map((application) => {
-          const status =
-            application.status &&
-            validStatuses.includes(application.status as any)
-              ? (application.status as (typeof validStatuses)[number])
-              : "interested";
+          const status = validStatuses.includes(application.status as any)
+            ? (application.status as (typeof validStatuses)[number])
+            : "interested";
 
           return {
             company: application.company.trim(),
@@ -206,7 +261,6 @@ Return ONLY the JSON object:`;
             link: application.link ?? undefined,
             notes: application.notes ?? undefined,
             status,
-            dashboardLink: application.dashboardLink ?? undefined,
           };
         });
 
@@ -215,13 +269,21 @@ Return ONLY the JSON object:`;
           applications: applicationsToInsert,
           userId: userId,
         });
+
+        console.log(
+          `Successfully imported ${applicationsToInsert.length} applications`,
+        );
       }
 
-      return { success: true };
+      return {
+        success: true,
+        importedCount: parsedApplications.length,
+      };
     } catch (error) {
-      console.error("AI generation error:", error);
+      console.error("Parsing error:", error);
       return {
         success: false,
+        error: error instanceof Error ? error.message : "Unknown parsing error",
       };
     }
   },
