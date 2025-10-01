@@ -9,25 +9,23 @@ import {
   TextAlignJustify,
   Link,
   ArrowRight,
+  Book,
 } from "lucide-react";
 import ApplicationList from "@/components/ApplicationList";
 import SuggestionsList from "@/components/SuggestionsList";
 import Sidebar from "@/components/Sidebar";
 
 export default function Home() {
-  const [showingList, setShowingList] = useState(true);
+  const [view, setView] = useState("list");
   return (
     <>
       <main className="p-8 flex">
         <div className="flex-1 items-center justify-center">
-          {showingList ? <ListView /> : <SuggestionsList />}
+          {view === "list" ? <ListView /> : <SuggestionsList />}
         </div>
         <Sidebar />
         <div className="ml-auto">
-          <ViewToggle
-            showingList={showingList}
-            setShowingList={setShowingList}
-          />
+          <ViewToggle showingList={view === "list"} setShowingList={setView} />
         </div>
       </main>
     </>
@@ -57,7 +55,7 @@ function ViewToggle({
   setShowingList,
 }: {
   showingList: boolean;
-  setShowingList: (showingList: boolean) => void;
+  setShowingList: (view: string) => void;
 }) {
   const user = useQuery(api.users.getUser);
   return (
@@ -66,7 +64,7 @@ function ViewToggle({
 
       <button
         className={`btn btn-primary w-full ${showingList ? "" : "btn-soft"}`}
-        onClick={() => setShowingList(true)}
+        onClick={() => setShowingList("list")}
       >
         <TextAlignJustify className="w-4 h-4" />
         Applications
@@ -74,7 +72,7 @@ function ViewToggle({
       {user?.sub !== "pro" ? (
         <>
           <button
-            className={`btn btn-square btn-warning ${showingList ? "btn-soft" : ""}`}
+            className={`btn btn-warning ${showingList ? "btn-soft" : ""}`}
             onClick={() =>
               (
                 document.getElementById(
@@ -84,6 +82,7 @@ function ViewToggle({
             }
           >
             <Lightbulb className="w-4 h-4" />
+            Suggestions
           </button>
 
           <dialog id="pro_feature_modal" className="modal">
@@ -172,10 +171,33 @@ function ViewToggle({
       ) : (
         <button
           className={`btn btn-primary ${showingList ? "btn-soft" : ""}`}
-          onClick={() => setShowingList(false)}
+          onClick={() => setShowingList("suggestions")}
         >
           <Lightbulb className="w-4 h-4" />
           Suggestions
+        </button>
+      )}
+      {user?.sub !== "pro" ? (
+        <button
+          className={`btn btn-warning ${showingList ? "btn-soft" : ""}`}
+          disabled
+          onClick={() =>
+            (
+              document.getElementById("pro_feature_modal") as HTMLDialogElement
+            )?.showModal()
+          }
+        >
+          <Book className="w-4 h-4" />
+          Resources
+        </button>
+      ) : (
+        <button
+          className={`btn btn-primary ${showingList ? "btn-soft" : ""}`}
+          onClick={() => setShowingList("suggestions")}
+          disabled
+        >
+          <Book className="w-4 h-4" />
+          Resources
         </button>
       )}
     </div>

@@ -59,6 +59,11 @@ export default function Sidebar() {
         ></label>
         <ul className="menu bg-base-200 text-base-content min-h-full w-80 p-4 flex flex-col">
           <div className="flex flex-col gap-2">
+            <img
+              src="/wordface.png"
+              alt="logo"
+              className="h-8 w-auto object-contain mb-4"
+            />
             <h3 className="text-sm font-semibold text-base-content/70 uppercase tracking-wide">
               Navigation
             </h3>
@@ -138,9 +143,13 @@ export default function Sidebar() {
                         ) as HTMLDialogElement
                       )?.showModal()
                     }
+                    disabled
                   >
                     <ClipboardPaste className="w-4 h-4" />
-                    Import from Clipboard
+                    Import from Clipboard{" "}
+                    <span className="text-xs text-base-content/70">
+                      (Coming Soon)
+                    </span>
                   </button>
                 </li>
               </>

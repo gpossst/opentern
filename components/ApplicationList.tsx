@@ -250,11 +250,6 @@ const ApplicationListItem = memo(function ApplicationListItem({
                             <div className="font-medium">
                               {entry.charAt(0).toUpperCase() + entry.slice(1)}
                             </div>
-                            <div className="text-xs opacity-70">
-                              {new Date(
-                                application.lastUpdated ?? Date.now(),
-                              ).toLocaleDateString()}
-                            </div>
                           </div>
                         </div>
                       </div>
