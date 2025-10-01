@@ -16,6 +16,7 @@ import { useState, useMemo, memo, useCallback, useRef } from "react";
 import Fuse from "fuse.js";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { z } from "zod";
+import { ApplicationSkeletonLoader } from "./SkeletonLoader";
 
 const formInfoSchema = z.object({
   company: z.string(),
@@ -111,7 +112,9 @@ export default function ApplicationList() {
             contain: "strict",
           }}
         >
-          {filteredApplications.length === 0 ? (
+          {applications === undefined ? (
+            <ApplicationSkeletonLoader count={20} height={60} />
+          ) : filteredApplications.length === 0 ? (
             <div className="p-4 text-center">No results found</div>
           ) : (
             <div
@@ -237,26 +240,25 @@ const ApplicationListItem = memo(function ApplicationListItem({
                         </div>
                       </div>
                     </div>
-                    {application.history
-                      .sort((a, b) => b.date - a.date) // Sort by most recent first
-                      .map((entry, index) => (
-                        <div key={index} className="join-item">
-                          <div className="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
-                            <div
-                              className={`w-3 h-3 rounded-full flex-shrink-0 ${getStatusColor(entry.status)}`}
-                            ></div>
-                            <div className="flex-1">
-                              <div className="font-medium">
-                                {entry.status.charAt(0).toUpperCase() +
-                                  entry.status.slice(1)}
-                              </div>
-                              <div className="text-xs opacity-70">
-                                {new Date(entry.date).toLocaleDateString()}
-                              </div>
+                    {application.history.map((entry, index) => (
+                      <div key={index} className="join-item">
+                        <div className="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
+                          <div
+                            className={`w-3 h-3 rounded-full flex-shrink-0 ${getStatusColor(entry)}`}
+                          ></div>
+                          <div className="flex-1">
+                            <div className="font-medium">
+                              {entry.charAt(0).toUpperCase() + entry.slice(1)}
+                            </div>
+                            <div className="text-xs opacity-70">
+                              {new Date(
+                                application.lastUpdated ?? Date.now(),
+                              ).toLocaleDateString()}
                             </div>
                           </div>
                         </div>
-                      ))}
+                      </div>
+                    ))}
                   </>
                 ) : (
                   <div className="join-item">

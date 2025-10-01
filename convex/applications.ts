@@ -14,6 +14,7 @@ export const getApplications = query({
     const applications = await ctx.db
       .query("applications")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .order("desc")
       .collect();
     return applications;
   },
@@ -24,14 +25,7 @@ export const createApplication = mutation({
     company: v.string(),
     title: v.string(),
     status: v.optional(statusUnion),
-    history: v.optional(
-      v.array(
-        v.object({
-          date: v.number(),
-          status: statusUnion,
-        }),
-      ),
-    ),
+    history: v.optional(v.array(statusUnion)),
     notes: v.optional(v.string()),
     link: v.optional(v.string()),
     lastUpdated: v.optional(v.number()),
@@ -115,17 +109,38 @@ export const updateStatus = mutation({
 
     const updatedApplication = await ctx.db.patch(args.id, {
       status: args.status,
-      history: [
-        ...(application.history || []),
-        {
-          date: application.lastUpdated || Date.now(),
-          status: application.status,
-        },
-      ],
+      history: [...(application.history || []), args.status],
       lastUpdated: Date.now(),
     });
 
     return "success";
   },
   returns: v.string(),
+});
+
+export const getSuggestedApplications = query({
+  args: {},
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new Error("Client is not authenticated!");
+    }
+
+    const applications = await ctx.db
+      .query("applications")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+
+    const applicationsFromSuggestions = applications.filter(
+      (application) => application.suggestionId != null,
+    );
+
+    console.log("Applications from suggestions", applicationsFromSuggestions);
+
+    const suggestionIds = applicationsFromSuggestions.map(
+      (application) => application.suggestionId!,
+    );
+
+    return suggestionIds;
+  },
 });

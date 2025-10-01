@@ -30,14 +30,7 @@ export default defineSchema({
     company: v.string(),
     title: v.string(),
     status: statusUnion,
-    history: v.optional(
-      v.array(
-        v.object({
-          date: v.number(),
-          status: statusUnion,
-        }),
-      ),
-    ),
+    history: v.optional(v.array(statusUnion)),
     notes: v.optional(v.string()),
     link: v.optional(v.string()),
     dashboardLink: v.optional(v.string()),

@@ -3,8 +3,9 @@ import { Doc } from "@/convex/_generated/dataModel";
 import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import React, { useCallback, useRef, useEffect, memo, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { PinIcon, LinkIcon, Plus, Search, Github } from "lucide-react";
+import { PinIcon, LinkIcon, Plus, Search, Github, Check } from "lucide-react";
 import Link from "next/link";
+import { SkeletonLoader } from "./SkeletonLoader";
 
 const repos: { owner: string; repo: string; path: string }[] = [
   {
@@ -20,6 +21,9 @@ const repos: { owner: string; repo: string; path: string }[] = [
 ];
 
 export default function SuggestionsList() {
+  const suggestedApplications = useQuery(
+    api.applications.getSuggestedApplications,
+  );
   const [filterOptions, setFilterOptions] = useState({
     search: "",
     company: [] as string[],
@@ -79,7 +83,9 @@ export default function SuggestionsList() {
             contain: "strict",
           }}
         >
-          {results.length === 0 ? (
+          {status === "LoadingFirstPage" ? (
+            <SkeletonLoader count={20} height={60} />
+          ) : results.length === 0 ? (
             <div className="p-4 text-center">No results found</div>
           ) : (
             <div
@@ -108,7 +114,12 @@ export default function SuggestionsList() {
                       ref={virtualizer.measureElement}
                       data-index={virtualItem.index}
                     >
-                      <SuggestionListItem suggestion={suggestion} />
+                      <SuggestionListItem
+                        suggestion={suggestion}
+                        suggestedApplications={
+                          (suggestedApplications || []) as string[]
+                        }
+                      />
                     </div>
                   </div>
                 );
@@ -123,14 +134,20 @@ export default function SuggestionsList() {
 
 function SuggestionListItem({
   suggestion,
+  suggestedApplications,
 }: {
   suggestion: Doc<"suggestions">;
+  suggestedApplications: string[];
 }) {
   const addApplication = useMutation(
     api.suggestions.addSuggestionToApplications,
   );
 
   const handleAddApplication = () => {
+    if (suggestedApplications.includes(suggestion._id)) {
+      return;
+    }
+    console.log("Adding application", suggestion._id, suggestedApplications);
     addApplication({ suggestionId: suggestion._id });
   };
 
@@ -175,13 +192,17 @@ function SuggestionListItem({
               </Link>
             )}
           <button
-            className="btn btn-square btn-sm"
+            className={`btn btn-square btn-sm ${suggestedApplications.includes(suggestion._id) ? "btn-disabled" : ""}`}
             onClick={(e) => {
               e.stopPropagation();
               handleAddApplication();
             }}
           >
-            <Plus className="w-4 h-4" />
+            {suggestedApplications.includes(suggestion._id) ? (
+              <Check className="w-4 h-4" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
           </button>
         </div>
       </div>

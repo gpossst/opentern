@@ -1,8 +1,7 @@
 import { action, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { z } from "zod";
-import { generateObject, NoObjectGeneratedError } from "ai";
-import { groq } from "@ai-sdk/groq";
+import Groq from "groq-sdk";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "./_generated/api";
 
@@ -46,31 +45,130 @@ export const importFromText = action({
       throw new Error("Client is not authenticated!");
     }
 
-    try {
-      const { object } = await generateObject({
-        model: groq("openai/gpt-oss-20b"),
-        schema: ApplicationsResponseSchema,
-        providerOptions: {
-          groq: {
-            reasoningEffort: "low",
-            structuredOutputs: true,
-          },
-        },
-        prompt: `Extract ALL job applications from the following text. Look for company names, job titles, application links, notes, and status information. If no applications are found, return an empty array.
+    // Validate input length to prevent token limit issues
+    if (args.data.length > 50000) {
+      throw new Error(
+        "Input text is too long. Please limit to 50,000 characters.",
+      );
+    }
 
-IMPORTANT: 
-- Every application MUST have a valid company name and job title
-- Process the ENTIRE text, not just the beginning
-- Return ALL applications found, not just the first 20
-- If the text is very long, make sure to scan through all of it
+    if (args.data.trim().length === 0) {
+      throw new Error("No text provided to parse.");
+    }
+
+    try {
+      // Initialize Groq client
+      const groq = new Groq({
+        apiKey: process.env.GROQ_API_KEY,
+      });
+
+      const prompt = `You are a job application parser. Extract job applications from the following text and return ONLY valid JSON.
+
+INSTRUCTIONS:
+1. Look for company names and job titles
+2. Extract any URLs, status information, or notes
+3. Return ONLY the JSON object, no other text
+4. If no applications found, return: {"applications": []}
+
+EXAMPLES of what to extract:
+- "Google - Software Engineer" → {"company": "Google", "title": "Software Engineer"}
+- "Applied to Meta for Product Manager role" → {"company": "Meta", "title": "Product Manager", "status": "applied"}
+- "Amazon AWS Solutions Architect - https://amazon.com/job" → {"company": "Amazon", "title": "AWS Solutions Architect", "link": "https://amazon.com/job"}
+
+REQUIRED JSON FORMAT (return exactly this structure):
+{
+  "applications": [
+    {
+      "company": "Company Name",
+      "title": "Job Title",
+      "link": "URL if available or null",
+      "notes": "Additional notes if any or null",
+      "status": "Application status if mentioned or null",
+      "dashboardLink": "Dashboard URL if available or null"
+    }
+  ]
+}
 
 Text to parse:
 ${args.data}
 
-Return the applications in the specified JSON format.`,
+Return ONLY the JSON object:`;
+
+      const chatCompletion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a JSON parser. Always return valid JSON only. Do not include any explanatory text or markdown formatting.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        model: "openai/gpt-oss-20b",
+        temperature: 0,
+        reasoning_effort: "low",
+        response_format: { type: "json_object" },
       });
 
-      if (object.applications.length > 0) {
+      const responseContent = chatCompletion.choices[0]?.message?.content;
+      if (!responseContent) {
+        throw new Error("No response content received from Groq");
+      }
+
+      console.log("Raw Groq response:", responseContent);
+
+      // Clean up the response content - remove any markdown formatting
+      let cleanedContent = responseContent.trim();
+
+      // Remove markdown code blocks if present
+      if (cleanedContent.startsWith("```json")) {
+        cleanedContent = cleanedContent
+          .replace(/^```json\s*/, "")
+          .replace(/\s*```$/, "");
+      } else if (cleanedContent.startsWith("```")) {
+        cleanedContent = cleanedContent
+          .replace(/^```\s*/, "")
+          .replace(/\s*```$/, "");
+      }
+
+      // Parse the JSON response
+      let object;
+      try {
+        object = JSON.parse(cleanedContent);
+      } catch (parseError) {
+        console.error("Failed to parse JSON response:");
+        console.error("Original response:", responseContent);
+        console.error("Cleaned response:", cleanedContent);
+        console.error("Parse error:", parseError);
+
+        // Try to extract JSON from the response if it's embedded in text
+        const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            object = JSON.parse(jsonMatch[0]);
+            console.log("Successfully extracted JSON from embedded text");
+          } catch (secondParseError) {
+            console.error("Failed to parse extracted JSON:", secondParseError);
+            throw new Error(
+              `Invalid JSON response from Groq. Raw response: ${responseContent.substring(0, 500)}...`,
+            );
+          }
+        } else {
+          throw new Error(
+            `Invalid JSON response from Groq. Raw response: ${responseContent.substring(0, 500)}...`,
+          );
+        }
+      }
+
+      // Validate the response against our schema
+      const validatedObject = ApplicationsResponseSchema.parse(object);
+
+      console.log("Parsed applications:", validatedObject.applications.length);
+      console.log("Raw object:", validatedObject);
+
+      if (validatedObject.applications.length > 0) {
         const validStatuses = [
           "interested",
           "applied",
@@ -82,16 +180,18 @@ Return the applications in the specified JSON format.`,
         ] as const;
 
         // Filter out applications with missing required fields
-        const validApplications = object.applications.filter((application) => {
-          return (
-            application.company &&
-            typeof application.company === "string" &&
-            application.company.trim().length > 0 &&
-            application.title &&
-            typeof application.title === "string" &&
-            application.title.trim().length > 0
-          );
-        });
+        const validApplications = validatedObject.applications.filter(
+          (application) => {
+            return (
+              application.company &&
+              typeof application.company === "string" &&
+              application.company.trim().length > 0 &&
+              application.title &&
+              typeof application.title === "string" &&
+              application.title.trim().length > 0
+            );
+          },
+        );
 
         const applicationsToInsert = validApplications.map((application) => {
           const status =
@@ -119,11 +219,7 @@ Return the applications in the specified JSON format.`,
 
       return { success: true };
     } catch (error) {
-      if (NoObjectGeneratedError.isInstance(error)) {
-        console.error("No object generated error:", error.cause);
-      } else {
-        console.error("AI generation error:", error);
-      }
+      console.error("AI generation error:", error);
       return {
         success: false,
       };

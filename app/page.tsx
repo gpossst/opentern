@@ -39,8 +39,8 @@ function ListView() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto">
-        <p>loading... (consider a loading skeleton)</p>
+      <div className="w-full flex justify-center items-center">
+        <span className="loading loading-dots loading-sm"></span>
       </div>
     );
   }
