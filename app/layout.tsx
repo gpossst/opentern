@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Opentern - Open Source Internship Application Tracker",
+    default: "Opentern | Apply Open Source",
     template: "%s | Opentern",
   },
   description:
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
         url: "/logo.png",
         width: 1200,
         height: 630,
-        alt: "Opentern - Open Source Internship Application Tracker",
+        alt: "Opentern | Apply Open Source",
       },
     ],
   },
