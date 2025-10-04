@@ -3,7 +3,6 @@ import {
   PanelLeftOpen,
   File,
   ClipboardPaste,
-  CloudUpload,
   X,
   Crown,
   ArrowRight,
@@ -18,18 +17,38 @@ import { useConvexAuth, useAction, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { api } from "../convex/_generated/api";
 
+/**
+ * Sidebar component - provides navigation, import functionality, and account management.
+ *
+ * Features:
+ * - Drawer-style sidebar with toggle button
+ * - Navigation links (Home, GitHub)
+ * - Import functionality (clipboard and file)
+ * - Ad-free subscription modal
+ * - Pro feature promotion
+ * - Account management and sign out
+ * - Payment integration for subscriptions
+ *
+ * @returns {JSX.Element} Complete sidebar with modals and functionality
+ */
 export default function Sidebar() {
+  // State for import functionality
   const [importText, setImportText] = useState("");
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  // State for payment button loading
   const [loadingProButton, setLoadingProButton] = useState(false);
+  // Get current user data
   const user = useQuery(api.users.getUser);
+  // Action for importing text data
   const importFromText = useAction(api.import.importFromText);
 
+  // Handle file import (currently not implemented)
   const handleFileImport = async (modalId: string) => {
     if (!importFile) return;
   };
 
+  // Handle text import from clipboard
   const handleTextImport = async (modalId: string) => {
     if (!importText) return;
     setIsImporting(true);
@@ -41,6 +60,7 @@ export default function Sidebar() {
     }
   };
 
+  // Handle payment button press for subscriptions
   const handleButtonPress = () => {
     setLoadingProButton(true);
     fetch("/api/payment", {
@@ -62,7 +82,7 @@ export default function Sidebar() {
     <div className="drawer fixed bottom-4 left-4 z-50">
       <input id="my-drawer" type="checkbox" className="drawer-toggle" />
       <div className="drawer-content">
-        {/* Page content here */}
+        {/* Toggle button for sidebar */}
         <label
           htmlFor="my-drawer"
           className="btn btn-primary drawer-button btn-square btn-sm"
@@ -71,12 +91,14 @@ export default function Sidebar() {
         </label>
       </div>
       <div className="drawer-side">
+        {/* Overlay to close sidebar when clicking outside */}
         <label
           htmlFor="my-drawer"
           aria-label="close sidebar"
           className="drawer-overlay h-screen"
         ></label>
         <ul className="menu bg-base-200 text-base-content min-h-full w-80 max-w-[calc(100vw-2rem)] p-4 flex flex-col">
+          {/* Navigation section */}
           <div className="flex flex-col gap-2">
             <img
               src="/wordface.png"
@@ -115,7 +137,7 @@ export default function Sidebar() {
             </li>
           </div>
 
-          {/* Import Section */}
+          {/* Import section */}
           <div className="divider my-4"></div>
           <div className="flex flex-col gap-2">
             <h3 className="text-sm font-semibold text-base-content/70 uppercase tracking-wide">
@@ -154,6 +176,7 @@ export default function Sidebar() {
             </li>
           </div>
 
+          {/* Account section */}
           <div className="divider my-4 mt-auto"></div>
           <div className="flex flex-col gap-2">
             <h3 className="text-sm font-semibold text-base-content/70 uppercase tracking-wide">
@@ -172,16 +195,16 @@ export default function Sidebar() {
         </ul>
       </div>
 
-      {/* Ad-Free Plan Dialog */}
+      {/* Ad-free subscription modal */}
       <dialog id="ad_free_modal" className="modal">
         <div className="modal-box max-w-md">
           <div className="flex flex-col items-center text-center gap-6">
-            {/* Crown Icon */}
+            {/* Crown icon */}
             <div className="flex items-center justify-center w-16 h-16 bg-warning rounded-full">
               <Crown className="w-8 h-8 text-base-100" />
             </div>
 
-            {/* Title */}
+            {/* Modal title and description */}
             <div>
               <h3 className="font-bold text-2xl mb-2">Go Ad-Free</h3>
               <p className="text-base-content/70">
@@ -189,7 +212,7 @@ export default function Sidebar() {
               </p>
             </div>
 
-            {/* Features List */}
+            {/* Features list */}
             <div className="w-full">
               <div className="bg-base-200 rounded-lg p-4 space-y-3">
                 <h4 className="font-semibold text-sm text-base-content/80 mb-3">
@@ -212,7 +235,7 @@ export default function Sidebar() {
               </div>
             </div>
 
-            {/* Pricing Info */}
+            {/* Pricing information */}
             <div className="bg-primary/10 rounded-lg p-4 w-full">
               <div className="text-2xl font-bold text-primary mb-1">
                 $2/month
@@ -220,7 +243,7 @@ export default function Sidebar() {
               <div className="text-sm text-base-content/70">Cancel anytime</div>
             </div>
 
-            {/* Action Buttons */}
+            {/* Action buttons */}
             <div className="flex gap-3 w-full">
               <form method="dialog" className="flex-1">
                 <button className="btn btn-outline w-full">Maybe Later</button>
@@ -247,16 +270,16 @@ export default function Sidebar() {
         </form>
       </dialog>
 
-      {/* Pro Feature Dialog */}
+      {/* Pro feature promotion modal */}
       <dialog id="pro_feature_modal" className="modal">
         <div className="modal-box max-w-md">
           <div className="flex flex-col items-center text-center gap-6">
-            {/* Crown Icon */}
+            {/* Crown icon */}
             <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full">
               <Crown className="w-8 h-8 text-primary" />
             </div>
 
-            {/* Title */}
+            {/* Modal title and description */}
             <div>
               <h3 className="font-bold text-2xl mb-2">Pro Feature</h3>
               <p className="text-base-content/70">
@@ -264,7 +287,7 @@ export default function Sidebar() {
               </p>
             </div>
 
-            {/* Features List */}
+            {/* Features list */}
             <div className="w-full">
               <div className="bg-base-200 rounded-lg p-4 space-y-3">
                 <h4 className="font-semibold text-sm text-base-content/80 mb-3">
@@ -291,7 +314,7 @@ export default function Sidebar() {
               </div>
             </div>
 
-            {/* Pricing Info */}
+            {/* Pricing information */}
             <div className="bg-primary/10 rounded-lg p-4 w-full">
               <div className="text-2xl font-bold text-primary mb-1">
                 $1/month
@@ -301,7 +324,7 @@ export default function Sidebar() {
               </div>
             </div>
 
-            {/* Action Buttons */}
+            {/* Action buttons */}
             <div className="flex gap-3 w-full">
               <form method="dialog" className="flex-1">
                 <button className="btn btn-outline w-full">Maybe Later</button>
@@ -328,7 +351,7 @@ export default function Sidebar() {
         </form>
       </dialog>
 
-      {/* File Import Dialog */}
+      {/* File import modal */}
       <dialog id="my_modal_1" className="modal">
         <div className="modal-box gap-4">
           <div className="flex flex-row justify-between items-center mb-4">
@@ -367,7 +390,7 @@ export default function Sidebar() {
         </div>
       </dialog>
 
-      {/* Clipboard Import Dialog */}
+      {/* Clipboard import modal */}
       <dialog id="my_modal_2" className="modal">
         <div className="modal-box gap-4">
           <div className="flex flex-row justify-between items-center mb-4">
@@ -416,6 +439,15 @@ export default function Sidebar() {
   );
 }
 
+/**
+ * SignOutButton component - handles user sign out functionality.
+ *
+ * Features:
+ * - Only shows when user is authenticated
+ * - Signs out user and redirects to home page
+ *
+ * @returns {JSX.Element} Sign out button or null
+ */
 function SignOutButton() {
   const { isAuthenticated } = useConvexAuth();
   const { signOut } = useAuthActions();

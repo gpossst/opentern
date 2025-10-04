@@ -4,7 +4,19 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { FaGithub, FaGoogle } from "react-icons/fa";
 import { Heart, CheckCircle, Zap, TextSearch, Network } from "lucide-react";
 
+/**
+ * Home page component for Opentern - the open-source internship application tracker.
+ *
+ * This component renders the landing page with:
+ * - Hero section with authentication
+ * - Feature showcase highlighting key benefits
+ * - Call-to-action for open source contributions
+ * - Footer with navigation links
+ *
+ * @returns {JSX.Element} The complete home page layout
+ */
 export default function Home() {
+  // Structured data for SEO
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -46,12 +58,13 @@ export default function Home() {
 
   return (
     <>
+      {/* Inject structured data for search engines */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
       <div className="min-h-screen bg-base-100">
-        {/* Hero Section */}
+        {/* Hero section with main value proposition and authentication */}
         <header className="hero min-h-screen bg-gradient-to-br from-base-100 to-base-300">
           <div className="hero-content text-center">
             <div className="max-w-md">
@@ -65,7 +78,7 @@ export default function Home() {
           </div>
         </header>
 
-        {/* Features Section */}
+        {/* Features section showcasing key benefits and capabilities */}
         <section id="features" className="py-20 bg-base-100">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16">
@@ -79,7 +92,7 @@ export default function Home() {
               </p>
             </div>
 
-            {/* First row - 3 cards */}
+            {/* Primary feature cards - organization, open source, performance */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
               <article className="card bg-base-200 shadow-xl">
                 <div className="card-body text-center">
@@ -129,7 +142,7 @@ export default function Home() {
               </article>
             </div>
 
-            {/* Second row - 2 centered cards */}
+            {/* Secondary feature cards - discovery and workflow */}
             <div className="flex justify-center gap-8">
               <article className="card bg-base-200 shadow-xl">
                 <div className="card-body text-center">
@@ -166,7 +179,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* CTA Section */}
+        {/* Call-to-action section encouraging open source contributions */}
         <section className="py-20 bg-gradient-to-r from-primary to-secondary">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-4xl font-bold text-primary-content mb-4">
@@ -226,6 +239,11 @@ export default function Home() {
   );
 }
 
+/**
+ * Google Sign-In button component for user authentication
+ * Kept in this file since it's only used on this page
+ * @returns {JSX.Element} Styled button that triggers Google OAuth flow
+ */
 function GoogleSignIn() {
   const { signIn } = useAuthActions();
   return (

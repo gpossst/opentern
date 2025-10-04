@@ -241,7 +241,6 @@ We welcome contributions from the community! Here's how you can help:
 - **New opportunity sources** - Add scraping for more internship repositories
 - **UI/UX improvements** - Enhance the user interface
 - **Performance optimizations** - Improve app speed and efficiency
-- **Mobile app** - Create a React Native version
 - **API integrations** - Connect with job boards and career sites
 - **Analytics** - Add application tracking and insights
 - **Documentation** - Improve guides and tutorials
@@ -368,7 +367,6 @@ Opentern automatically scrapes internship opportunities from popular GitHub repo
 
 ### Long Term
 
-- [ ] React Native mobile app
 - [ ] Team collaboration features
 - [ ] Integration with job boards
 - [ ] AI-powered opportunity matching
@@ -390,13 +388,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Convex** for providing an amazing real-time backend platform
 - **Next.js** team for the incredible React framework
 - **All contributors** who help make Opentern better
-
-## 📞 Support
-
-- **Documentation**: Check this README and code comments
-- **Issues**: Use GitHub issues for bugs and feature requests
-- **Discussions**: Use GitHub discussions for questions
-- **Email**: [support@opentern.io](mailto:support@opentern.io)
 
 ---
 

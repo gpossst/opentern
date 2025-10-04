@@ -1,5 +1,6 @@
 [] Test payments
 [] Billing page redirect
-[] Readme
-[] Comments
-[] Cleanup
+[] Ads
+[x] Readme
+[x] Comments
+[x] Cleanup

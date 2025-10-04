@@ -1,39 +1,16 @@
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Doc } from "@/convex/_generated/dataModel";
-import {
-  X,
-  Link as LinkIcon,
-  Search,
-  Check,
-  ClipboardPaste,
-  ChevronDown,
-  Trash,
-  ExternalLink,
-  Plus,
-} from "lucide-react";
-import Link from "next/link";
-import { createPortal } from "react-dom";
-import { statusUnion } from "@/convex/unions";
-import { Infer } from "convex/values";
-import { useState, useMemo, memo, useCallback, useRef, useEffect } from "react";
+import StatusDropdown from "./StatusDropdown";
+import { Search, ClipboardPaste, ExternalLink, Plus } from "lucide-react";
+import { useState, useMemo, memo, useCallback, useRef } from "react";
 import Fuse from "fuse.js";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { z } from "zod";
 import { ApplicationSkeletonLoader } from "./SkeletonLoader";
-import SortableList from "./SortableList";
+import ApplicationPopover from "./ApplicationPopover";
 
-function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number,
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout;
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
-}
-
+// Zod schema for validating application form input
 const formInfoSchema = z.object({
   company: z.string(),
   title: z.string(),
@@ -66,37 +43,27 @@ const formInfoSchema = z.object({
     ),
 });
 
-// Utility function for status colors - defined outside component to avoid recreation
-const getStatusColor = (status: string) => {
-  const colorMap: Record<string, string> = {
-    offered: "bg-success",
-    rejected: "bg-error",
-    interviewed: "bg-info",
-    assessment: "bg-warning",
-    applied: "bg-primary",
-    interested: "bg-accent",
-  };
-  return colorMap[status] || "bg-none";
-};
-
-const getStatusButtonClass = (status: string) => {
-  const buttonMap: Record<string, string> = {
-    offered: "btn-success",
-    rejected: "btn-error",
-    interviewed: "btn-info",
-    assessment: "btn-warning",
-    applied: "btn-primary",
-    interested: "btn-accent",
-  };
-  return buttonMap[status] || "bg-none";
-};
-
+/**
+ * ApplicationList component - displays and manages user's internship applications.
+ *
+ * Features:
+ * - Virtualized list for performance with large datasets
+ * - Real-time search with fuzzy matching
+ * - Application creation form with validation
+ * - Status management and editing
+ * - Modal popover for detailed view
+ *
+ * @returns {JSX.Element} Complete application management interface
+ */
 export default function ApplicationList() {
+  // Fetch applications from Convex database
   const applications = useQuery(api.applications.getApplications);
+  // Search query state for filtering applications
   const [searchQuery, setSearchQuery] = useState("");
+  // Ref for the scrollable container
   const parentRef = useRef<HTMLDivElement>(null);
 
-  // Memoize filtered applications to avoid recalculating on every render
+  // Memoized filtered applications using Fuse.js for fuzzy search
   const filteredApplications = useMemo(() => {
     if (!applications || !searchQuery.trim()) return applications || [];
 
@@ -109,6 +76,7 @@ export default function ApplicationList() {
     return results.map((result) => result.item);
   }, [applications, searchQuery]);
 
+  // Virtualizer for efficient rendering of large lists
   const virtualizer = useVirtualizer({
     count: filteredApplications.length,
     getScrollElement: () => parentRef.current,
@@ -118,13 +86,16 @@ export default function ApplicationList() {
 
   return (
     <div className="flex gap-4 pr-4">
+      {/* Search filter component */}
       <ApplicationFilter
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
       />
       <div className="flex flex-col gap-2 w-full">
         <h2 className="text-lg font-semibold">Applications</h2>
+        {/* Form for creating new applications */}
         <ApplicationInput />
+        {/* Virtualized list container */}
         <div
           ref={parentRef}
           className="h-[40.5rem] overflow-auto bg-base-100 rounded-box shadow-md"
@@ -133,10 +104,13 @@ export default function ApplicationList() {
           }}
         >
           {applications === undefined ? (
+            // Show skeleton loader while data is loading
             <ApplicationSkeletonLoader count={20} height={60} />
           ) : filteredApplications.length === 0 ? (
+            // Show message when no results found
             <div className="p-4 text-center">No results found</div>
           ) : (
+            // Virtualized list rendering
             <div
               style={{
                 height: `${virtualizer.getTotalSize()}px`,
@@ -176,22 +150,37 @@ export default function ApplicationList() {
   );
 }
 
+/**
+ * ApplicationListItem component - renders individual application cards in the list.
+ *
+ * Features:
+ * - Click to open detailed modal
+ * - Status dropdown for quick updates
+ * - External link access
+ * - Delete functionality
+ *
+ * @param application - The application data to display
+ * @returns {JSX.Element} Individual application list item
+ */
 const ApplicationListItem = memo(function ApplicationListItem({
   application,
 }: {
   application: Doc<"applications">;
 }) {
+  // Mutation for deleting applications
   const deleteApplication = useMutation(api.applications.deleteApplication);
 
+  // Handle application deletion
   const handleDeleteApplication = () => {
     deleteApplication({ id: application._id });
   };
 
   return (
     <div className="relative">
+      {/* Clickable application card */}
       <div
         onClick={(e) => {
-          // Check if the click target is within a dropdown
+          // Prevent modal opening when clicking dropdown buttons
           const isDropdownClick =
             e.target instanceof Element &&
             (e.target.closest(".dropdown") ||
@@ -206,11 +195,14 @@ const ApplicationListItem = memo(function ApplicationListItem({
         }}
         className="p-4 cursor-pointer rounded-md hover:bg-base-200 transition-colors flex flex-row justify-between items-center min-h-[60px]"
       >
+        {/* Company and title information */}
         <div className="flex items-center gap-2 flex-1 my-1 cursor-pointer">
           <div className="font-semibold">{application.company}</div>
           <div className="text-sm opacity-70">{application.title}</div>
         </div>
+        {/* Action buttons */}
         <div className="flex items-center gap-2">
+          {/* External link button if available */}
           {application.link && (
             <button
               className="btn btn-square btn-sm btn-info btn-soft"
@@ -219,9 +211,11 @@ const ApplicationListItem = memo(function ApplicationListItem({
               <ExternalLink className="w-4 h-4" />
             </button>
           )}
+          {/* Status dropdown for quick updates */}
           <StatusDropdown application={application} />
         </div>
       </div>
+      {/* Modal popover for detailed view */}
       <ApplicationPopover
         application={application}
         handleDeleteApplication={handleDeleteApplication}
@@ -230,158 +224,13 @@ const ApplicationListItem = memo(function ApplicationListItem({
   );
 });
 
-const StatusDropdown = memo(function StatusDropdown({
-  application,
-  size,
-}: {
-  application: Doc<"applications">;
-  size?: "sm";
-}) {
-  const updateStatus = useMutation(api.applications.updateStatus);
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLDivElement>(null);
-  const menuRef = useRef<HTMLUListElement>(null);
-  const [coords, setCoords] = useState<{
-    top: number;
-    left: number;
-    width: number;
-  }>({ top: 0, left: 0, width: 0 });
-  const [portalRoot, setPortalRoot] = useState<Element | null>(null);
-
-  const updateCoords = useCallback(() => {
-    const rect = triggerRef.current?.getBoundingClientRect();
-    if (rect) {
-      setCoords({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width,
-      });
-    }
-  }, []);
-  const statuses = [
-    "interested",
-    "applied",
-    "assessment",
-    "interviewed",
-    "offered",
-    "rejected",
-    "archived",
-  ];
-
-  const handleUpdateStatus = useCallback(
-    (status: Infer<typeof statusUnion>) => {
-      if (status === application.status) {
-        return;
-      }
-      updateStatus({ id: application._id, status });
-      setOpen(false);
-    },
-    [updateStatus, application._id, application.status],
-  );
-
-  const toggleOpen = useCallback(() => {
-    setOpen((prev) => {
-      if (!prev) {
-        // Only update coords and portal root when opening
-        updateCoords();
-        const root =
-          (triggerRef.current?.closest("dialog") as Element | null) ||
-          document.body;
-        setPortalRoot(root);
-      }
-      return !prev;
-    });
-  }, [updateCoords]);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (triggerRef.current && triggerRef.current.contains(target)) {
-        return;
-      }
-      if (menuRef.current && menuRef.current.contains(target)) {
-        return;
-      }
-      setOpen(false);
-    };
-    const handleScrollResize = () => setOpen(false);
-    document.addEventListener("mousedown", handleClickOutside);
-    window.addEventListener("scroll", handleScrollResize, true);
-    window.addEventListener("resize", handleScrollResize);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      window.removeEventListener("scroll", handleScrollResize, true);
-      window.removeEventListener("resize", handleScrollResize);
-    };
-  }, [open]);
-
-  return (
-    <div className="relative">
-      {size !== "sm" ? (
-        <div
-          ref={triggerRef}
-          tabIndex={0}
-          role="button"
-          className={`btn btn-sm ${getStatusButtonClass(application.status)}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleOpen();
-          }}
-        >
-          {application.status.charAt(0).toUpperCase() +
-            application.status.slice(1)}
-          <ChevronDown className="w-4 h-4" />
-        </div>
-      ) : (
-        <div
-          ref={triggerRef}
-          tabIndex={0}
-          role="button"
-          className={`btn btn-square btn-xs btn-primary`}
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleOpen();
-          }}
-        >
-          <Plus className="w-4 h-4" />
-        </div>
-      )}
-      {open &&
-        portalRoot &&
-        createPortal(
-          <ul
-            ref={menuRef}
-            className="menu bg-base-100 rounded-box w-52 p-2 shadow-sm"
-            style={{
-              position: "fixed",
-              top: coords.top,
-              left: coords.left,
-              zIndex: 2147483000,
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {statuses
-              .filter((status) => status !== application.status)
-              .map((status) => (
-                <li key={status}>
-                  <a
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleUpdateStatus(status as Infer<typeof statusUnion>);
-                    }}
-                  >
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </a>
-                </li>
-              ))}
-          </ul>,
-          portalRoot,
-        )}
-    </div>
-  );
-});
-
+/**
+ * ApplicationFilter component - provides search functionality for applications.
+ *
+ * @param searchQuery - Current search query string
+ * @param setSearchQuery - Function to update search query
+ * @returns {JSX.Element} Search input component
+ */
 const ApplicationFilter = memo(function ApplicationFilter({
   searchQuery,
   setSearchQuery,
@@ -389,6 +238,7 @@ const ApplicationFilter = memo(function ApplicationFilter({
   searchQuery: string;
   setSearchQuery: (query: string) => void;
 }) {
+  // Handle search input changes
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchQuery(e.target.value);
@@ -413,11 +263,26 @@ const ApplicationFilter = memo(function ApplicationFilter({
   );
 });
 
+/**
+ * ApplicationInput component - form for creating new applications.
+ *
+ * Features:
+ * - Dynamic input sizing on focus
+ * - URL validation with optional protocol
+ * - Clipboard paste functionality
+ * - Form validation with error handling
+ *
+ * @returns {JSX.Element} Application creation form
+ */
 function ApplicationInput() {
+  // State for dynamic input sizing
   const [hovered, setHovered] = useState("");
+  // Error state for form validation
   const [error, setError] = useState<string | null>(null);
+  // Mutation for creating new applications
   const createApplication = useMutation(api.applications.createApplication);
 
+  // Form data state
   const [formInfo, setFormInfo] = useState<z.infer<typeof formInfoSchema>>({
     company: "",
     title: "",
@@ -512,119 +377,5 @@ function ApplicationInput() {
         </button>
       </div>
     </div>
-  );
-}
-
-function ApplicationPopover({
-  application,
-  handleDeleteApplication,
-}: {
-  application: Doc<"applications">;
-  handleDeleteApplication: () => void;
-}) {
-  const updateApplication = useMutation(api.applications.updateApplication);
-  const [localNotes, setLocalNotes] = useState(application.notes || "");
-
-  // Update local state when application data changes
-  useEffect(() => {
-    setLocalNotes(application.notes || "");
-  }, [application.notes]);
-
-  // Debounced update function
-  const debouncedUpdate = useMemo(
-    () =>
-      debounce(
-        async (
-          notes?: string | undefined,
-          link?: string | undefined,
-          company?: string | undefined,
-          title?: string | undefined,
-        ) => {
-          const updateData: any = {};
-          if (notes !== undefined) updateData.notes = notes;
-          if (link !== undefined) updateData.link = link;
-          if (company !== undefined) updateData.company = company;
-          if (title !== undefined) updateData.title = title;
-          await updateApplication({
-            id: application._id,
-            ...updateData,
-          });
-        },
-        500,
-      ),
-    [updateApplication, application._id],
-  );
-
-  const handleNotesChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const value = e.target.value;
-      setLocalNotes(value);
-      debouncedUpdate(value, undefined, undefined, undefined);
-    },
-    [debouncedUpdate],
-  );
-
-  return (
-    <dialog id={application._id.toString()} className="modal">
-      <div className="modal-box min-w-5xl bg-base-300 max-h-[90vh] overflow-y-auto scrollbar-hide min-h-2/3 flex flex-col">
-        <div className="flex flex-row justify-between items-center">
-          <div className="flex items-center gap-2">
-            <h3 className="font-bold text-lg">{application.company}</h3>
-            <p className=" text-sm opacity-70">{application.title}</p>
-            {application.link && (
-              <Link
-                href={application.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-square btn-xs btn-info"
-              >
-                <LinkIcon className="w-4 h-4" />
-              </Link>
-            )}
-          </div>
-          <form method="dialog" className="flex gap-2">
-            <button
-              className="btn btn-square btn-sm btn-error btn-soft"
-              onClick={handleDeleteApplication}
-            >
-              <Trash className="w-4 h-4" />
-            </button>
-            <button className="btn btn-square btn-sm btn-accent">
-              <X className="w-4 h-4" />
-            </button>
-          </form>
-        </div>
-
-        <div className="flex gap-4 pt-4 flex-1 min-h-0">
-          <div className="flex flex-col gap-4 flex-[6] min-h-0">
-            <h4 className="font-semibold text-base">Notes</h4>
-            <textarea
-              className="textarea w-full flex-1 resize-none"
-              value={localNotes}
-              onChange={handleNotesChange}
-              placeholder="No notes yet"
-            >
-              {localNotes}
-            </textarea>
-          </div>
-
-          <div className="flex-[1] flex flex-col">
-            <div className="flex justify-between items-start">
-              <h4 className="font-semibold text-base mb-4">Status</h4>
-              <StatusDropdown application={application} size="sm" />
-            </div>
-            <div className="join join-vertical w-full">
-              <SortableList
-                list={[application.status, ...(application.history || [])]}
-                id={application._id}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-      <form method="dialog" className="modal-backdrop">
-        <button>close</button>
-      </form>
-    </dialog>
   );
 }

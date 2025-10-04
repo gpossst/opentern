@@ -3,7 +3,19 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "./_generated/api";
 
-// Interface for parsed application data
+/**
+ * Data Import Functionality
+ *
+ * This module handles importing job application data from various sources.
+ * Supports parsing tab-separated data (TSV) with automatic column detection
+ * and status normalization. Used for bulk importing applications from
+ * spreadsheets, CSV files, or other data sources.
+ */
+
+/**
+ * Interface for parsed application data
+ * Represents a single job application after parsing from raw data
+ */
 interface ParsedApplication {
   company: string;
   title: string;
@@ -12,7 +24,10 @@ interface ParsedApplication {
   status?: string;
 }
 
-// Column mapping interface
+/**
+ * Column mapping interface
+ * Maps column indices to field names for flexible data parsing
+ */
 interface ColumnMapping {
   company?: number;
   title?: number;
@@ -22,7 +37,16 @@ interface ColumnMapping {
   notes?: number;
 }
 
-// Function to detect column headers and map them to our fields
+/**
+ * Detects column headers and maps them to application fields
+ *
+ * Analyzes the header row to automatically identify which columns
+ * contain company names, job titles, statuses, links, dates, and notes.
+ * Supports various naming conventions for flexibility.
+ *
+ * @param headerRow - The first row containing column headers
+ * @returns Mapping of field names to column indices
+ */
 function detectColumns(headerRow: string): ColumnMapping {
   const columns = headerRow.toLowerCase().split("\t");
   const mapping: ColumnMapping = {};
@@ -71,7 +95,15 @@ function detectColumns(headerRow: string): ColumnMapping {
   return mapping;
 }
 
-// Function to normalize status values
+/**
+ * Normalizes status values to standard application statuses
+ *
+ * Converts various status formats (e.g., "submitted", "test", "interview")
+ * to our standard status values. Handles common variations and typos.
+ *
+ * @param status - Raw status string from imported data
+ * @returns Normalized status string
+ */
 function normalizeStatus(status: string): string {
   if (!status) return "interested";
 
@@ -95,7 +127,12 @@ function normalizeStatus(status: string): string {
   return "interested";
 }
 
-// Function to check if a string is a URL
+/**
+ * Checks if a string is a valid URL
+ *
+ * @param str - String to validate
+ * @returns True if the string is a valid URL
+ */
 function isUrl(str: string): boolean {
   try {
     new URL(str);
@@ -105,7 +142,16 @@ function isUrl(str: string): boolean {
   }
 }
 
-// Main parsing function
+/**
+ * Main parsing function for application data
+ *
+ * Parses tab-separated data into application objects. Handles column detection,
+ * data validation, URL processing, and note combination. Filters out invalid
+ * rows and normalizes all data fields.
+ *
+ * @param data - Raw tab-separated data string
+ * @returns Array of parsed application objects
+ */
 function parseApplicationData(data: string): ParsedApplication[] {
   const lines = data.trim().split("\n");
   if (lines.length < 2) {
@@ -175,6 +221,7 @@ function parseApplicationData(data: string): ParsedApplication[] {
         link.includes("workday") ||
         link.includes("userHome")
       ) {
+        // Skip dashboard URLs - they're not job posting links
       } else {
         jobLink = link;
       }
@@ -202,6 +249,16 @@ function parseApplicationData(data: string): ParsedApplication[] {
   return applications;
 }
 
+/**
+ * Imports application data from text input
+ *
+ * Main action function that processes raw text data and imports it as applications.
+ * Handles authentication, data validation, parsing, and bulk insertion.
+ * Returns success status and import count.
+ *
+ * @param data - Raw text data (typically tab-separated)
+ * @returns Import result with success status and count
+ */
 export const importFromText = action({
   args: { data: v.string() },
   handler: async (ctx, args) => {
@@ -211,7 +268,7 @@ export const importFromText = action({
       throw new Error("Client is not authenticated!");
     }
 
-    // Validate input length
+    // Validate input length to prevent abuse
     if (args.data.length > 100000) {
       throw new Error(
         "Input text is too long. Please limit to 100,000 characters.",
@@ -261,7 +318,7 @@ export const importFromText = action({
           };
         });
 
-        // Call the mutation to insert data
+        // Call the internal mutation to insert data
         await ctx.runMutation(internal.applications.insertApplications, {
           applications: applicationsToInsert,
           userId: userId,
@@ -281,6 +338,14 @@ export const importFromText = action({
   },
 });
 
+/**
+ * Generates an upload URL for file storage
+ *
+ * Creates a temporary upload URL that can be used to upload files
+ * to Convex storage. This is typically used for importing data from files.
+ *
+ * @returns Upload URL for file storage
+ */
 export const generateUploadUrl = mutation({
   handler: async (ctx) => {
     return await ctx.storage.generateUploadUrl();

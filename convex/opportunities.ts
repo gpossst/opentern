@@ -3,6 +3,23 @@ import { mutation, query } from "./_generated/server";
 import { paginationOptsValidator } from "convex/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
+/**
+ * Opportunities Management Functions
+ *
+ * This module handles job opportunities from various sources (LinkedIn, Indeed, etc.).
+ * Includes functions for adding opportunities, querying with filters, and converting
+ * opportunities to applications.
+ */
+
+/**
+ * Adds multiple job opportunities to the database
+ *
+ * Filters out duplicate opportunities (same company and title) before inserting.
+ * This prevents the same job posting from being added multiple times.
+ *
+ * @param opportunities - Array of opportunity objects to add
+ * @param source - Source of the opportunities (e.g., "linkedin", "indeed")
+ */
 export const addOpportunities = mutation({
   args: {
     opportunities: v.array(
@@ -19,7 +36,7 @@ export const addOpportunities = mutation({
   handler: async (ctx, args) => {
     const now = Date.now();
 
-    // Get all existing opportunities across all sources to check for duplicates
+    // Get all existing opportunities to check for duplicates
     const allExistingOpportunities = await ctx.db
       .query("opportunities")
       .collect();
@@ -33,6 +50,7 @@ export const addOpportunities = mutation({
         ),
     );
 
+    // Insert new opportunities in parallel for better performance
     await Promise.all(
       newOpportunities.map((opportunity) =>
         ctx.db.insert("opportunities", {
@@ -48,6 +66,21 @@ export const addOpportunities = mutation({
   },
 });
 
+/**
+ * Retrieves job opportunities with various filtering options
+ *
+ * Supports multiple query modes:
+ * - Search by title text
+ * - Filter by source
+ * - Filter by company names
+ * - Default: all opportunities ordered by creation date
+ *
+ * @param source - Filter by opportunity source (optional)
+ * @param paginationOpts - Pagination configuration
+ * @param search - Search term for job titles (optional)
+ * @param company - Array of company names to filter by (optional)
+ * @returns Paginated results based on the query mode
+ */
 export const getOpportunities = query({
   args: {
     source: v.optional(v.string()),
@@ -56,19 +89,24 @@ export const getOpportunities = query({
     company: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
+    // Search mode: full-text search on job titles
     if (args.search) {
       return await ctx.db
         .query("opportunities")
         .withSearchIndex("search_title", (q) => q.search("title", args.search!))
         .paginate(args.paginationOpts);
-    } else if (args.source) {
+    }
+    // Source filter mode: opportunities from specific source
+    else if (args.source) {
       return await ctx.db
         .query("opportunities")
         .withIndex("by_source_created", (q) => q.eq("source", args.source!))
         .order("desc")
         .paginate(args.paginationOpts);
-    } else if (args.company && args.company.length > 0) {
-      // Handle multiple companies by querying each one individually
+    }
+    // Company filter mode: opportunities from specific companies
+    else if (args.company && args.company.length > 0) {
+      // Query each company individually and combine results
       const allResults = await Promise.all(
         args.company.map((company) =>
           ctx.db
@@ -78,12 +116,12 @@ export const getOpportunities = query({
         ),
       );
 
-      // Flatten and sort by createdAt descending
+      // Flatten and sort by creation date (newest first)
       const flattened = allResults
         .flat()
         .sort((a, b) => b.createdAt - a.createdAt);
 
-      // Manual pagination
+      // Manual pagination for combined results
       const start = args.paginationOpts.cursor
         ? parseInt(args.paginationOpts.cursor)
         : 0;
@@ -95,7 +133,9 @@ export const getOpportunities = query({
         isDone: end >= flattened.length,
         continueCursor: end < flattened.length ? end.toString() : "",
       };
-    } else {
+    }
+    // Default mode: all opportunities ordered by creation date
+    else {
       return await ctx.db
         .query("opportunities")
         .withIndex("by_createdAt")
@@ -105,36 +145,61 @@ export const getOpportunities = query({
   },
 });
 
+/**
+ * Converts a job opportunity into an application
+ *
+ * When a user decides to apply for a job opportunity, this function creates
+ * a new application record linked to the original opportunity. This maintains
+ * the connection between the opportunity and the resulting application.
+ *
+ * @param opportunityId - ID of the opportunity to convert to application
+ */
 export const addSuggestionToApplications = mutation({
   args: {
     opportunityId: v.id("opportunities"),
   },
   handler: async (ctx, args) => {
+    // Verify the opportunity exists
     const opportunity = await ctx.db.get(args.opportunityId);
     if (!opportunity) {
       throw new Error("Suggestion not found!");
     }
+
+    // Verify user is authenticated
     const userId = await getAuthUserId(ctx);
     if (!userId) {
       throw new Error("Client is not authenticated!");
     }
+
+    // Create new application from the opportunity
     await ctx.db.insert("applications", {
       company: opportunity.company,
       title: opportunity.title,
       userId: userId,
-      status: "interested",
+      status: "interested", // Start with "interested" status
       history: [],
       notes: "",
       link: opportunity.link,
       lastUpdated: Date.now(),
-      opportunityId: args.opportunityId,
+      opportunityId: args.opportunityId, // Link back to the original opportunity
     });
   },
 });
 
+/**
+ * Gets a list of all unique company names from opportunities
+ *
+ * This function is used to populate company filter dropdowns and
+ * provide autocomplete suggestions for company-based searches.
+ *
+ * @returns Array of unique company names
+ */
 export const getCompanies = query({
   handler: async (ctx) => {
+    // Get all opportunities
     const opportunities = await ctx.db.query("opportunities").collect();
+
+    // Extract unique company names using Set
     const companies = [...new Set(opportunities.map((s) => s.company))];
     return companies;
   },
