@@ -20,7 +20,7 @@ const repos: { owner: string; repo: string; path: string }[] = [
   },
 ];
 
-export default function SuggestionsList() {
+export default function OpportunitiesList() {
   const suggestedApplications = useQuery(
     api.applications.getSuggestedApplications,
   );
@@ -32,7 +32,7 @@ export default function SuggestionsList() {
   const parentRef = useRef<HTMLDivElement>(null);
 
   const { results, status, loadMore } = usePaginatedQuery(
-    api.suggestions.getSuggestions,
+    api.opportunities.getOpportunities,
     filterOptions,
     { initialNumItems: 40 },
   );
@@ -70,15 +70,15 @@ export default function SuggestionsList() {
 
   return (
     <div className="flex gap-4 pr-4">
-      <SuggestionsFilter
+      <OpportunitiesFilter
         filterOptions={filterOptions}
         setFilterOptions={setFilterOptions}
       />
-      <div className="flex flex-col gap-4 w-full">
-        <h2 className="text-lg font-semibold">Suggestions</h2>
+      <div className="flex flex-col gap-2 w-full">
+        <h2 className="text-lg font-semibold">Opportunities</h2>
         <div
           ref={parentRef}
-          className="h-[42rem] overflow-auto bg-base-100 rounded-box shadow-md"
+          className="h-[44.5rem] overflow-auto bg-base-100 rounded-box shadow-md"
           style={{
             contain: "strict",
           }}
@@ -96,10 +96,10 @@ export default function SuggestionsList() {
               }}
             >
               {virtualizer.getVirtualItems().map((virtualItem) => {
-                const suggestion = results[virtualItem.index];
+                const opportunity = results[virtualItem.index];
                 return (
                   <div
-                    key={suggestion._id}
+                    key={opportunity._id}
                     style={{
                       position: "absolute",
                       top: 0,
@@ -115,7 +115,7 @@ export default function SuggestionsList() {
                       data-index={virtualItem.index}
                     >
                       <SuggestionListItem
-                        suggestion={suggestion}
+                        opportunity={opportunity}
                         suggestedApplications={
                           (suggestedApplications || []) as string[]
                         }
@@ -133,26 +133,26 @@ export default function SuggestionsList() {
 }
 
 function SuggestionListItem({
-  suggestion,
+  opportunity,
   suggestedApplications,
 }: {
-  suggestion: Doc<"suggestions">;
+  opportunity: Doc<"opportunities">;
   suggestedApplications: string[];
 }) {
   const addApplication = useMutation(
-    api.suggestions.addSuggestionToApplications,
+    api.opportunities.addSuggestionToApplications,
   );
 
   const handleAddApplication = () => {
-    if (suggestedApplications.includes(suggestion._id)) {
+    if (suggestedApplications.includes(opportunity._id)) {
       return;
     }
-    console.log("Adding application", suggestion._id, suggestedApplications);
-    addApplication({ suggestionId: suggestion._id });
+    console.log("Adding application", opportunity._id, suggestedApplications);
+    addApplication({ opportunityId: opportunity._id });
   };
 
   const handleOpenJobDescription = () => {
-    window.open(suggestion.link, "_blank");
+    window.open(opportunity.link, "_blank");
   };
 
   return (
@@ -162,16 +162,16 @@ function SuggestionListItem({
         className="p-4 cursor-pointer rounded-md hover:bg-base-200 transition-colors flex flex-row justify-between items-center min-h-[60px]"
       >
         <div className="flex items-center gap-2 flex-1 my-1 cursor-pointer">
-          <div className="font-semibold">{suggestion.company}</div>
-          <div className="text-sm opacity-70">{suggestion.title}</div>
-          {suggestion.location && (
+          <div className="font-semibold">{opportunity.company}</div>
+          <div className="text-sm opacity-70">{opportunity.title}</div>
+          {opportunity.location && (
             <div className="text-sm opacity-70">
-              {suggestion.location.length < 20 ? (
-                `(${suggestion.location})`
+              {opportunity.location.length < 20 ? (
+                `(${opportunity.location})`
               ) : (
                 <div
                   className="tooltip tooltip-top"
-                  data-tip={suggestion.location}
+                  data-tip={opportunity.location}
                 >
                   <PinIcon className="w-4 h-4 text-primary" />
                 </div>
@@ -180,10 +180,10 @@ function SuggestionListItem({
           )}
         </div>
         <div className="flex items-center gap-2">
-          {suggestion.source &&
-            repos.find((repo) => repo.owner === suggestion.source) && (
+          {opportunity.source &&
+            repos.find((repo) => repo.owner === opportunity.source) && (
               <Link
-                href={`https://github.com/${suggestion.source}/${repos.find((repo) => repo.owner === suggestion.source)?.repo}/`}
+                href={`https://github.com/${opportunity.source}/${repos.find((repo) => repo.owner === opportunity.source)?.repo}/`}
                 target="_blank"
                 className="text-primary btn btn-square btn-sm"
                 onClick={(e) => e.stopPropagation()}
@@ -192,13 +192,13 @@ function SuggestionListItem({
               </Link>
             )}
           <button
-            className={`btn btn-square btn-sm ${suggestedApplications.includes(suggestion._id) ? "btn-disabled" : ""}`}
+            className={`btn btn-square btn-sm ${suggestedApplications.includes(opportunity._id) ? "btn-disabled" : ""}`}
             onClick={(e) => {
               e.stopPropagation();
               handleAddApplication();
             }}
           >
-            {suggestedApplications.includes(suggestion._id) ? (
+            {suggestedApplications.includes(opportunity._id) ? (
               <Check className="w-4 h-4" />
             ) : (
               <Plus className="w-4 h-4" />
@@ -210,7 +210,7 @@ function SuggestionListItem({
   );
 }
 
-const SuggestionsFilter = memo(function SuggestionsFilter({
+const OpportunitiesFilter = memo(function OpportunitiesFilter({
   filterOptions,
   setFilterOptions,
 }: {
@@ -225,7 +225,7 @@ const SuggestionsFilter = memo(function SuggestionsFilter({
     source: string;
   }) => void;
 }) {
-  const companies = useQuery(api.suggestions.getCompanies);
+  const companies = useQuery(api.opportunities.getCompanies);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [companySearch, setCompanySearch] = useState("");
@@ -274,7 +274,7 @@ const SuggestionsFilter = memo(function SuggestionsFilter({
     };
   }, [isDropdownOpen]);
 
-  const filteredCompanies = companies?.filter((company) =>
+  const filteredCompanies = companies?.filter((company: string) =>
     company.toLowerCase().includes(companySearch.toLowerCase()),
   );
 
@@ -304,7 +304,7 @@ const SuggestionsFilter = memo(function SuggestionsFilter({
                 />
               </label>
               <div className="max-h-128 overflow-y-auto p-2 gap-1 flex flex-col">
-                {filteredCompanies?.map((company) => (
+                {filteredCompanies?.map((company: string) => (
                   <button
                     key={company}
                     className={`w-full flex items-center gap-2 text-wrap btn btn-soft btn-sm justify-start ${filterOptions.company.includes(company) ? "btn-primary" : ""}`}

@@ -139,7 +139,6 @@ function parseApplicationData(data: string): ParsedApplication[] {
     const title = columns[columnMapping.title]?.trim();
 
     if (!company || !title) {
-      console.warn(`Skipping row ${i + 1}: missing company or title`);
       continue;
     }
 
@@ -227,8 +226,6 @@ export const importFromText = action({
       // Parse the data using our custom parser
       const parsedApplications = parseApplicationData(args.data);
 
-      console.log("Parsed applications:", parsedApplications.length);
-
       if (parsedApplications.length > 0) {
         const validStatuses = [
           "interested",
@@ -269,10 +266,6 @@ export const importFromText = action({
           applications: applicationsToInsert,
           userId: userId,
         });
-
-        console.log(
-          `Successfully imported ${applicationsToInsert.length} applications`,
-        );
       }
 
       return {
@@ -280,7 +273,6 @@ export const importFromText = action({
         importedCount: parsedApplications.length,
       };
     } catch (error) {
-      console.error("Parsing error:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown parsing error",

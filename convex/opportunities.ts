@@ -3,9 +3,9 @@ import { mutation, query } from "./_generated/server";
 import { paginationOptsValidator } from "convex/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
-export const addSuggestions = mutation({
+export const addOpportunities = mutation({
   args: {
-    suggestions: v.array(
+    opportunities: v.array(
       v.object({
         company: v.string(),
         title: v.string(),
@@ -19,34 +19,36 @@ export const addSuggestions = mutation({
   handler: async (ctx, args) => {
     const now = Date.now();
 
-    // Get all existing suggestions across all sources to check for duplicates
-    const allExistingSuggestions = await ctx.db.query("suggestions").collect();
+    // Get all existing opportunities across all sources to check for duplicates
+    const allExistingOpportunities = await ctx.db
+      .query("opportunities")
+      .collect();
 
-    // Filter out suggestions that already exist (same company and title)
-    const newSuggestions = args.suggestions.filter(
-      (suggestion) =>
-        !allExistingSuggestions.some(
+    // Filter out opportunities that already exist (same company and title)
+    const newOpportunities = args.opportunities.filter(
+      (opportunity) =>
+        !allExistingOpportunities.some(
           (s) =>
-            s.company === suggestion.company && s.title === suggestion.title,
+            s.company === opportunity.company && s.title === opportunity.title,
         ),
     );
 
     await Promise.all(
-      newSuggestions.map((suggestion) =>
-        ctx.db.insert("suggestions", {
-          company: suggestion.company,
-          title: suggestion.title,
-          location: suggestion.location,
-          link: suggestion.applicationLink,
+      newOpportunities.map((opportunity) =>
+        ctx.db.insert("opportunities", {
+          company: opportunity.company,
+          title: opportunity.title,
+          location: opportunity.location,
+          link: opportunity.applicationLink,
           source: args.source,
-          createdAt: suggestion.createdAt || now,
+          createdAt: opportunity.createdAt || now,
         }),
       ),
     );
   },
 });
 
-export const getSuggestions = query({
+export const getOpportunities = query({
   args: {
     source: v.optional(v.string()),
     paginationOpts: paginationOptsValidator,
@@ -56,12 +58,12 @@ export const getSuggestions = query({
   handler: async (ctx, args) => {
     if (args.search) {
       return await ctx.db
-        .query("suggestions")
+        .query("opportunities")
         .withSearchIndex("search_title", (q) => q.search("title", args.search!))
         .paginate(args.paginationOpts);
     } else if (args.source) {
       return await ctx.db
-        .query("suggestions")
+        .query("opportunities")
         .withIndex("by_source_created", (q) => q.eq("source", args.source!))
         .order("desc")
         .paginate(args.paginationOpts);
@@ -70,7 +72,7 @@ export const getSuggestions = query({
       const allResults = await Promise.all(
         args.company.map((company) =>
           ctx.db
-            .query("suggestions")
+            .query("opportunities")
             .withIndex("by_company", (q) => q.eq("company", company))
             .collect(),
         ),
@@ -95,7 +97,7 @@ export const getSuggestions = query({
       };
     } else {
       return await ctx.db
-        .query("suggestions")
+        .query("opportunities")
         .withIndex("by_createdAt")
         .order("desc")
         .paginate(args.paginationOpts);
@@ -105,11 +107,11 @@ export const getSuggestions = query({
 
 export const addSuggestionToApplications = mutation({
   args: {
-    suggestionId: v.id("suggestions"),
+    opportunityId: v.id("opportunities"),
   },
   handler: async (ctx, args) => {
-    const suggestion = await ctx.db.get(args.suggestionId);
-    if (!suggestion) {
+    const opportunity = await ctx.db.get(args.opportunityId);
+    if (!opportunity) {
       throw new Error("Suggestion not found!");
     }
     const userId = await getAuthUserId(ctx);
@@ -117,23 +119,23 @@ export const addSuggestionToApplications = mutation({
       throw new Error("Client is not authenticated!");
     }
     await ctx.db.insert("applications", {
-      company: suggestion.company,
-      title: suggestion.title,
+      company: opportunity.company,
+      title: opportunity.title,
       userId: userId,
       status: "interested",
       history: [],
       notes: "",
-      link: suggestion.link,
+      link: opportunity.link,
       lastUpdated: Date.now(),
-      suggestionId: args.suggestionId,
+      opportunityId: args.opportunityId,
     });
   },
 });
 
 export const getCompanies = query({
   handler: async (ctx) => {
-    const suggestions = await ctx.db.query("suggestions").collect();
-    const companies = [...new Set(suggestions.map((s) => s.company))];
+    const opportunities = await ctx.db.query("opportunities").collect();
+    const companies = [...new Set(opportunities.map((s) => s.company))];
     return companies;
   },
 });

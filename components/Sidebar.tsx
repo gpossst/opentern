@@ -10,17 +10,19 @@ import {
   CreditCard,
   DollarSign,
   House,
+  Github,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useConvexAuth, useAction, useQuery } from "convex/react";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { api } from "../convex/_generated/api";
 
 export default function Sidebar() {
   const [importText, setImportText] = useState("");
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [loadingProButton, setLoadingProButton] = useState(false);
   const user = useQuery(api.users.getUser);
   const importFromText = useAction(api.import.importFromText);
 
@@ -39,8 +41,25 @@ export default function Sidebar() {
     }
   };
 
+  const handleButtonPress = () => {
+    setLoadingProButton(true);
+    fetch("/api/payment", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.text())
+      .then((data) => {
+        redirect(data);
+      })
+      .finally(() => {
+        setLoadingProButton(false);
+      });
+  };
+
   return (
-    <div className="drawer absolute bottom-4 left-4">
+    <div className="drawer fixed bottom-4 left-4 z-50">
       <input id="my-drawer" type="checkbox" className="drawer-toggle" />
       <div className="drawer-content">
         {/* Page content here */}
@@ -55,9 +74,9 @@ export default function Sidebar() {
         <label
           htmlFor="my-drawer"
           aria-label="close sidebar"
-          className="drawer-overlay"
+          className="drawer-overlay h-screen"
         ></label>
-        <ul className="menu bg-base-200 text-base-content min-h-full w-80 p-4 flex flex-col">
+        <ul className="menu bg-base-200 text-base-content min-h-full w-80 max-w-[calc(100vw-2rem)] p-4 flex flex-col">
           <div className="flex flex-col gap-2">
             <img
               src="/wordface.png"
@@ -73,24 +92,18 @@ export default function Sidebar() {
                 Home
               </Link>
             </li>
-            {user?.sub === "pro" ? (
-              <li className="">
-                <Link href="/pricing" className="">
-                  <DollarSign className="w-4 h-4" />
-                  Pricing
-                </Link>
-              </li>
-            ) : (
-              <li className="">
-                <Link
-                  href="/pricing"
-                  className="btn btn-primary btn-sm w-full justify-start"
-                >
-                  <Crown className="w-4 h-4" />
-                  Upgrade to Pro
-                </Link>
-              </li>
-            )}
+            <li className="">
+              <Link href="/pricing" className="">
+                <DollarSign className="w-4 h-4" />
+                Pricing
+              </Link>
+            </li>
+            <li>
+              <a href="https://github.com/gpossst/tracklication">
+                <Github className="w-4 h-4" />
+                GitHub
+              </a>
+            </li>
           </div>
 
           {/* Import Section */}
@@ -100,60 +113,36 @@ export default function Sidebar() {
               Import
             </h3>
 
-            {user?.sub !== "pro" ? (
-              <li>
-                <button
-                  className="btn btn-warning btn-sm w-full justify-start"
-                  onClick={() =>
-                    (
-                      document.getElementById(
-                        "pro_feature_modal",
-                      ) as HTMLDialogElement
-                    )?.showModal()
-                  }
-                >
-                  <CloudUpload className="w-4 h-4" />
-                  Import (Pro Feature)
-                </button>
-              </li>
-            ) : (
-              <>
-                <li>
-                  <button
-                    className=""
-                    onClick={() =>
-                      (
-                        document.getElementById(
-                          "my_modal_1",
-                        ) as HTMLDialogElement
-                      )?.showModal()
-                    }
-                  >
-                    <File className="w-4 h-4" />
-                    Import from File
-                  </button>
-                </li>
-                <li>
-                  <button
-                    className=""
-                    onClick={() =>
-                      (
-                        document.getElementById(
-                          "my_modal_2",
-                        ) as HTMLDialogElement
-                      )?.showModal()
-                    }
-                    disabled
-                  >
-                    <ClipboardPaste className="w-4 h-4" />
-                    Import from Clipboard{" "}
-                    <span className="text-xs text-base-content/70">
-                      (Coming Soon)
-                    </span>
-                  </button>
-                </li>
-              </>
-            )}
+            <li>
+              <button
+                className=""
+                onClick={() =>
+                  (
+                    document.getElementById("my_modal_2") as HTMLDialogElement
+                  )?.showModal()
+                }
+              >
+                <ClipboardPaste className="w-4 h-4" />
+                Import from Clipboard{" "}
+              </button>
+            </li>
+            <li>
+              <button
+                className=""
+                onClick={() =>
+                  (
+                    document.getElementById("my_modal_1") as HTMLDialogElement
+                  )?.showModal()
+                }
+                disabled
+              >
+                <File className="w-4 h-4" />
+                Import from File
+                <span className="text-xs text-base-content/70">
+                  (Coming Soon)
+                </span>
+              </button>
+            </li>
           </div>
 
           <div className="divider my-4 mt-auto"></div>
@@ -208,7 +197,7 @@ export default function Sidebar() {
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="badge badge-success badge-sm">✓</div>
-                    <span>Suggestions</span>
+                    <span>Opportunities</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="badge badge-success badge-sm">✓</div>
@@ -355,7 +344,7 @@ function SignOutButton() {
           className="btn btn-sm btn-primary"
           onClick={() =>
             void signOut().then(() => {
-              router.push("/signin");
+              router.push("/");
             })
           }
         >

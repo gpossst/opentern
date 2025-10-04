@@ -8,42 +8,62 @@ import {
   Check,
   ClipboardPaste,
   ChevronDown,
+  Trash,
+  ExternalLink,
+  Plus,
 } from "lucide-react";
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { statusUnion } from "@/convex/unions";
 import { Infer } from "convex/values";
-import { useState, useMemo, memo, useCallback, useRef } from "react";
+import { useState, useMemo, memo, useCallback, useRef, useEffect } from "react";
 import Fuse from "fuse.js";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { z } from "zod";
 import { ApplicationSkeletonLoader } from "./SkeletonLoader";
+import SortableList from "./SortableList";
+
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number,
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
 
 const formInfoSchema = z.object({
   company: z.string(),
   title: z.string(),
-  link: z.string().refine(
-    (val) => {
-      // If it already has a protocol, validate as-is
-      if (val.startsWith("http://") || val.startsWith("https://")) {
+  link: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val) return true;
+        // If it already has a protocol, validate as-is
+        if (val.startsWith("http://") || val.startsWith("https://")) {
+          try {
+            new URL(val);
+            return true;
+          } catch {
+            return false;
+          }
+        }
+        // If no protocol, add https:// and validate
         try {
-          new URL(val);
+          new URL(`https://${val}`);
           return true;
         } catch {
           return false;
         }
-      }
-      // If no protocol, add https:// and validate
-      try {
-        new URL(`https://${val}`);
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    {
-      message: "Must be a valid URL (protocol optional)",
-    },
-  ),
+      },
+      {
+        message: "Must be a valid URL (protocol optional)",
+      },
+    ),
 });
 
 // Utility function for status colors - defined outside component to avoid recreation
@@ -102,12 +122,12 @@ export default function ApplicationList() {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
       />
-      <div className="flex flex-col gap-4 w-full">
+      <div className="flex flex-col gap-2 w-full">
         <h2 className="text-lg font-semibold">Applications</h2>
         <ApplicationInput />
         <div
           ref={parentRef}
-          className="h-[42rem] overflow-auto bg-base-100 rounded-box shadow-md"
+          className="h-[40.5rem] overflow-auto bg-base-100 rounded-box shadow-md"
           style={{
             contain: "strict",
           }}
@@ -161,6 +181,12 @@ const ApplicationListItem = memo(function ApplicationListItem({
 }: {
   application: Doc<"applications">;
 }) {
+  const deleteApplication = useMutation(api.applications.deleteApplication);
+
+  const handleDeleteApplication = () => {
+    deleteApplication({ id: application._id });
+  };
+
   return (
     <div className="relative">
       <div
@@ -184,115 +210,63 @@ const ApplicationListItem = memo(function ApplicationListItem({
           <div className="font-semibold">{application.company}</div>
           <div className="text-sm opacity-70">{application.title}</div>
         </div>
-        <StatusDropdown application={application} />
-      </div>
-      <dialog id={application._id.toString()} className="modal">
-        <div className="modal-box min-w-5xl bg-base-300">
-          <div className="flex flex-row justify-between items-center">
-            <div className="flex items-center gap-2">
-              <h3 className="font-bold text-lg">{application.company}</h3>
-              <p className=" text-sm opacity-70">{application.title}</p>
-              {application.link && (
-                <Link
-                  href={application.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-square btn-xs btn-info"
-                >
-                  <LinkIcon className="w-4 h-4" />
-                </Link>
-              )}
-            </div>
-            <form method="dialog" className="">
-              <button className="btn btn-square btn-sm btn-error">
-                <X className="w-4 h-4" />
-              </button>
-            </form>
-          </div>
-
-          <div className="flex gap-4 pt-4">
-            <div className="flex flex-col gap-2 flex-[6]">
-              <h4 className="font-semibold text-base mb-4">Notes</h4>
-              <p className="text-sm opacity-70">
-                {application.notes || "No notes"}
-              </p>
-            </div>
-            <div className="flex-[1]">
-              <h4 className="font-semibold text-base mb-4">Status</h4>
-              <div className="join join-vertical w-full">
-                {application.history && application.history.length > 0 ? (
-                  <>
-                    <div className="join-item">
-                      <div className="flex items-center gap-3 p-3 bg-primary text-primary-content rounded-lg">
-                        <div
-                          className={`w-3 h-3 rounded-full flex-shrink-0 ${getStatusColor(application.status)}`}
-                        ></div>
-                        <div className="flex-1">
-                          <div className="font-medium">
-                            {application.status.charAt(0).toUpperCase() +
-                              application.status.slice(1)}
-                          </div>
-                          <div className="text-xs opacity-70">
-                            {new Date(
-                              application.lastUpdated ?? Date.now(),
-                            ).toLocaleDateString()}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    {application.history.map((entry, index) => (
-                      <div key={index} className="join-item">
-                        <div className="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
-                          <div
-                            className={`w-3 h-3 rounded-full flex-shrink-0 ${getStatusColor(entry)}`}
-                          ></div>
-                          <div className="flex-1">
-                            <div className="font-medium">
-                              {entry.charAt(0).toUpperCase() + entry.slice(1)}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                ) : (
-                  <div className="join-item">
-                    <div className="flex items-center gap-3 p-3 bg-primary text-primary-content rounded-lg">
-                      <div
-                        className={`w-3 h-3 rounded-full flex-shrink-0 ${getStatusColor(application.status)}`}
-                      ></div>
-                      <div className="flex-1">
-                        <div className="font-medium">
-                          {application.status.charAt(0).toUpperCase() +
-                            application.status.slice(1)}
-                        </div>
-                        <div className="text-xs opacity-70">
-                          {new Date(
-                            application.lastUpdated ?? Date.now(),
-                          ).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+        <div className="flex items-center gap-2">
+          {application.link && (
+            <button
+              className="btn btn-square btn-sm btn-info btn-soft"
+              onClick={() => window.open(application.link, "_blank")}
+            >
+              <ExternalLink className="w-4 h-4" />
+            </button>
+          )}
+          <StatusDropdown application={application} />
         </div>
-        <form method="dialog" className="modal-backdrop">
-          <button>close</button>
-        </form>
-      </dialog>
+      </div>
+      <ApplicationPopover
+        application={application}
+        handleDeleteApplication={handleDeleteApplication}
+      />
     </div>
   );
 });
 
 const StatusDropdown = memo(function StatusDropdown({
   application,
+  size,
 }: {
   application: Doc<"applications">;
+  size?: "sm";
 }) {
   const updateStatus = useMutation(api.applications.updateStatus);
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLUListElement>(null);
+  const [coords, setCoords] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  }>({ top: 0, left: 0, width: 0 });
+  const [portalRoot, setPortalRoot] = useState<Element | null>(null);
+
+  const updateCoords = useCallback(() => {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (rect) {
+      setCoords({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+  }, []);
+  const statuses = [
+    "interested",
+    "applied",
+    "assessment",
+    "interviewed",
+    "offered",
+    "rejected",
+    "archived",
+  ];
 
   const handleUpdateStatus = useCallback(
     (status: Infer<typeof statusUnion>) => {
@@ -300,48 +274,110 @@ const StatusDropdown = memo(function StatusDropdown({
         return;
       }
       updateStatus({ id: application._id, status });
+      setOpen(false);
     },
     [updateStatus, application._id, application.status],
   );
 
+  const toggleOpen = useCallback(() => {
+    setOpen((prev) => {
+      if (!prev) {
+        // Only update coords and portal root when opening
+        updateCoords();
+        const root =
+          (triggerRef.current?.closest("dialog") as Element | null) ||
+          document.body;
+        setPortalRoot(root);
+      }
+      return !prev;
+    });
+  }, [updateCoords]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (triggerRef.current && triggerRef.current.contains(target)) {
+        return;
+      }
+      if (menuRef.current && menuRef.current.contains(target)) {
+        return;
+      }
+      setOpen(false);
+    };
+    const handleScrollResize = () => setOpen(false);
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", handleScrollResize, true);
+    window.addEventListener("resize", handleScrollResize);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScrollResize, true);
+      window.removeEventListener("resize", handleScrollResize);
+    };
+  }, [open]);
+
   return (
-    <div className="dropdown dropdown-bottom dropdown-center relative">
-      <div
-        tabIndex={0}
-        role="button"
-        className={`btn btn-sm ${getStatusButtonClass(application.status)}`}
-      >
-        {application.status.charAt(0).toUpperCase() +
-          application.status.slice(1)}
-        <ChevronDown className="w-4 h-4" />
-      </div>
-      <ul
-        tabIndex={0}
-        className="dropdown-content menu bg-base-100 rounded-box w-52 p-2 shadow-sm"
-        style={{ zIndex: 1001 }}
-      >
-        <li>
-          <a onClick={() => handleUpdateStatus("interested")}>Interested</a>
-        </li>
-        <li>
-          <a onClick={() => handleUpdateStatus("applied")}>Applied</a>
-        </li>
-        <li>
-          <a onClick={() => handleUpdateStatus("assessment")}>Assessment</a>
-        </li>
-        <li>
-          <a onClick={() => handleUpdateStatus("interviewed")}>Interviewed</a>
-        </li>
-        <li>
-          <a onClick={() => handleUpdateStatus("offered")}>Offered</a>
-        </li>
-        <li>
-          <a onClick={() => handleUpdateStatus("rejected")}>Rejected</a>
-        </li>
-        <li>
-          <a onClick={() => handleUpdateStatus("archived")}>Archived</a>
-        </li>
-      </ul>
+    <div className="relative">
+      {size !== "sm" ? (
+        <div
+          ref={triggerRef}
+          tabIndex={0}
+          role="button"
+          className={`btn btn-sm ${getStatusButtonClass(application.status)}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleOpen();
+          }}
+        >
+          {application.status.charAt(0).toUpperCase() +
+            application.status.slice(1)}
+          <ChevronDown className="w-4 h-4" />
+        </div>
+      ) : (
+        <div
+          ref={triggerRef}
+          tabIndex={0}
+          role="button"
+          className={`btn btn-square btn-xs btn-primary`}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleOpen();
+          }}
+        >
+          <Plus className="w-4 h-4" />
+        </div>
+      )}
+      {open &&
+        portalRoot &&
+        createPortal(
+          <ul
+            ref={menuRef}
+            className="menu bg-base-100 rounded-box w-52 p-2 shadow-sm"
+            style={{
+              position: "fixed",
+              top: coords.top,
+              left: coords.left,
+              zIndex: 2147483000,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {statuses
+              .filter((status) => status !== application.status)
+              .map((status) => (
+                <li key={status}>
+                  <a
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleUpdateStatus(status as Infer<typeof statusUnion>);
+                    }}
+                  >
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                  </a>
+                </li>
+              ))}
+          </ul>,
+          portalRoot,
+        )}
     </div>
   );
 });
@@ -421,7 +457,7 @@ function ApplicationInput() {
   };
 
   return (
-    <div className="flex flex-col bg-neutral rounded-md p-2 w-full">
+    <div className="flex flex-col bg-base-200 rounded-md p-2 w-full">
       <div className="flex gap-2 w-full">
         <label
           className={`input  transition-all duration-300 ${hovered === "company" ? "flex-[5]" : "flex-1"}`}
@@ -472,9 +508,123 @@ function ApplicationInput() {
           className="btn btn-primary btn-square btn-soft"
           onClick={handleSubmit}
         >
-          <Check className="w-5 h-5" />
+          <Plus className="w-5 h-5" />
         </button>
       </div>
     </div>
+  );
+}
+
+function ApplicationPopover({
+  application,
+  handleDeleteApplication,
+}: {
+  application: Doc<"applications">;
+  handleDeleteApplication: () => void;
+}) {
+  const updateApplication = useMutation(api.applications.updateApplication);
+  const [localNotes, setLocalNotes] = useState(application.notes || "");
+
+  // Update local state when application data changes
+  useEffect(() => {
+    setLocalNotes(application.notes || "");
+  }, [application.notes]);
+
+  // Debounced update function
+  const debouncedUpdate = useMemo(
+    () =>
+      debounce(
+        async (
+          notes?: string | undefined,
+          link?: string | undefined,
+          company?: string | undefined,
+          title?: string | undefined,
+        ) => {
+          const updateData: any = {};
+          if (notes !== undefined) updateData.notes = notes;
+          if (link !== undefined) updateData.link = link;
+          if (company !== undefined) updateData.company = company;
+          if (title !== undefined) updateData.title = title;
+          await updateApplication({
+            id: application._id,
+            ...updateData,
+          });
+        },
+        500,
+      ),
+    [updateApplication, application._id],
+  );
+
+  const handleNotesChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const value = e.target.value;
+      setLocalNotes(value);
+      debouncedUpdate(value, undefined, undefined, undefined);
+    },
+    [debouncedUpdate],
+  );
+
+  return (
+    <dialog id={application._id.toString()} className="modal">
+      <div className="modal-box min-w-5xl bg-base-300 max-h-[90vh] overflow-y-auto scrollbar-hide min-h-2/3 flex flex-col">
+        <div className="flex flex-row justify-between items-center">
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-lg">{application.company}</h3>
+            <p className=" text-sm opacity-70">{application.title}</p>
+            {application.link && (
+              <Link
+                href={application.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-square btn-xs btn-info"
+              >
+                <LinkIcon className="w-4 h-4" />
+              </Link>
+            )}
+          </div>
+          <form method="dialog" className="flex gap-2">
+            <button
+              className="btn btn-square btn-sm btn-error btn-soft"
+              onClick={handleDeleteApplication}
+            >
+              <Trash className="w-4 h-4" />
+            </button>
+            <button className="btn btn-square btn-sm btn-accent">
+              <X className="w-4 h-4" />
+            </button>
+          </form>
+        </div>
+
+        <div className="flex gap-4 pt-4 flex-1 min-h-0">
+          <div className="flex flex-col gap-4 flex-[6] min-h-0">
+            <h4 className="font-semibold text-base">Notes</h4>
+            <textarea
+              className="textarea w-full flex-1 resize-none"
+              value={localNotes}
+              onChange={handleNotesChange}
+              placeholder="No notes yet"
+            >
+              {localNotes}
+            </textarea>
+          </div>
+
+          <div className="flex-[1] flex flex-col">
+            <div className="flex justify-between items-start">
+              <h4 className="font-semibold text-base mb-4">Status</h4>
+              <StatusDropdown application={application} size="sm" />
+            </div>
+            <div className="join join-vertical w-full">
+              <SortableList
+                list={[application.status, ...(application.history || [])]}
+                id={application._id}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+      <form method="dialog" className="modal-backdrop">
+        <button>close</button>
+      </form>
+    </dialog>
   );
 }

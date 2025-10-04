@@ -1,205 +1,186 @@
 "use client";
-
-import { useConvexAuth, useQuery } from "convex/react";
-import { api } from "../convex/_generated/api";
-import { useState } from "react";
-import {
-  Lightbulb,
-  Crown,
-  TextAlignJustify,
-  Link,
-  ArrowRight,
-  Book,
-} from "lucide-react";
-import ApplicationList from "@/components/ApplicationList";
-import SuggestionsList from "@/components/SuggestionsList";
-import Sidebar from "@/components/Sidebar";
+import React from "react";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { FaGithub, FaGoogle } from "react-icons/fa";
+import { Heart, CheckCircle, Zap, TextSearch, Network } from "lucide-react";
 
 export default function Home() {
-  const [view, setView] = useState("list");
   return (
-    <>
-      <main className="p-8 flex">
-        <div className="flex-1 items-center justify-center">
-          {view === "list" ? <ListView /> : <SuggestionsList />}
+    <div className="min-h-screen bg-base-100">
+      {/* Hero Section */}
+      <div className="hero min-h-screen bg-gradient-to-br from-base-100 to-base-300">
+        <div className="hero-content text-center">
+          <div className="max-w-md">
+            <h1 className="text-5xl font-bold ">Tracklication</h1>
+            <p className="py-6 text-lg">
+              The open-source internship application tracker.
+            </p>
+            <GoogleSignIn />
+          </div>
         </div>
-        <Sidebar />
-        <div className="ml-auto">
-          <ViewToggle showingList={view === "list"} setShowingList={setView} />
-        </div>
-      </main>
-    </>
-  );
-}
-
-function ListView() {
-  const { isLoading } = useConvexAuth();
-
-  if (isLoading) {
-    return (
-      <div className="w-full flex justify-center items-center">
-        <span className="loading loading-dots loading-sm"></span>
       </div>
-    );
-  }
 
-  return (
-    <div className="flex flex-col gap-8 ">
-      <ApplicationList />
-    </div>
-  );
-}
+      {/* Features Section */}
+      <div id="features" className="py-20 bg-base-100">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4">
+              Why Choose Tracklication?
+            </h2>
+            <p className="text-lg text-base-content/70 max-w-2xl mx-auto">
+              Built for developers, by developers. Track your internship
+              applications with powerful features designed to streamline your
+              job search.
+            </p>
+          </div>
 
-function ViewToggle({
-  showingList,
-  setShowingList,
-}: {
-  showingList: boolean;
-  setShowingList: (view: string) => void;
-}) {
-  const user = useQuery(api.users.getUser);
-  return (
-    <div className="flex flex-col gap-2 max-w-xs">
-      <h2 className="text-lg font-semibold">View</h2>
-
-      <button
-        className={`btn btn-primary w-full ${showingList ? "" : "btn-soft"}`}
-        onClick={() => setShowingList("list")}
-      >
-        <TextAlignJustify className="w-4 h-4" />
-        Applications
-      </button>
-      {user?.sub !== "pro" ? (
-        <>
-          <button
-            className={`btn btn-warning ${showingList ? "btn-soft" : ""}`}
-            onClick={() =>
-              (
-                document.getElementById(
-                  "pro_feature_modal",
-                ) as HTMLDialogElement
-              )?.showModal()
-            }
-          >
-            <Lightbulb className="w-4 h-4" />
-            Suggestions
-          </button>
-
-          <dialog id="pro_feature_modal" className="modal">
-            <div className="modal-box max-w-md">
-              <div className="flex flex-col items-center text-center gap-6">
-                {/* Crown Icon */}
-                <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full">
-                  <Crown className="w-8 h-8 text-primary" />
+          {/* First row - 3 cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+            <div className="card bg-base-200 shadow-xl">
+              <div className="card-body text-center">
+                <div className="mx-auto mb-2">
+                  <CheckCircle className="w-12 h-12 text-primary" />
                 </div>
-
-                {/* Title */}
-                <div>
-                  <h3 className="font-bold text-2xl mb-2">Pro Feature</h3>
-                  <p className="text-base-content/70">
-                    Suggestions are available with our Pro plan
-                  </p>
-                </div>
-
-                {/* Features List */}
-                <div className="w-full">
-                  <div className="bg-base-200 rounded-lg p-4 space-y-3">
-                    <h4 className="font-semibold text-sm text-base-content/80 mb-3">
-                      Pro includes:
-                    </h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center gap-2">
-                        <div className="badge badge-success badge-sm">✓</div>
-                        <span>Import from clipboard</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="badge badge-success badge-sm">✓</div>
-                        <span>Import from file (coming soon)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="badge badge-success badge-sm">✓</div>
-                        <span>Suggestions</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="badge badge-success badge-sm">✓</div>
-                        <span>Support for the team</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Pricing Info */}
-                <div className="bg-primary/10 rounded-lg p-4 w-full">
-                  <div className="text-2xl font-bold text-primary mb-1">
-                    $1/month
-                  </div>
-                  <div className="text-sm text-base-content/70">
-                    Start your free trial today
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3 w-full">
-                  <form method="dialog" className="flex-1">
-                    <button className="btn btn-outline w-full">
-                      Maybe Later
-                    </button>
-                  </form>
-                  <Link href="/pricing" className="flex-1">
-                    <button
-                      className="btn btn-primary w-full"
-                      onClick={() =>
-                        (
-                          document.getElementById(
-                            "pro_feature_modal",
-                          ) as HTMLDialogElement
-                        )?.close()
-                      }
-                    >
-                      View Pricing
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </Link>
-                </div>
+                <h3 className="card-title justify-center mb-2">
+                  Smart Organization
+                </h3>
+                <p className="text-base-content/70">
+                  Organize your applications by status, company, or priority.
+                  Never lose track of where you've applied.
+                </p>
               </div>
             </div>
-            <form method="dialog" className="modal-backdrop">
-              <button>close</button>
-            </form>
-          </dialog>
-        </>
-      ) : (
-        <button
-          className={`btn btn-primary ${showingList ? "btn-soft" : ""}`}
-          onClick={() => setShowingList("suggestions")}
-        >
-          <Lightbulb className="w-4 h-4" />
-          Suggestions
-        </button>
-      )}
-      {user?.sub !== "pro" ? (
-        <button
-          className={`btn btn-warning ${showingList ? "btn-soft" : ""}`}
-          disabled
-          onClick={() =>
-            (
-              document.getElementById("pro_feature_modal") as HTMLDialogElement
-            )?.showModal()
-          }
-        >
-          <Book className="w-4 h-4" />
-          Resources
-        </button>
-      ) : (
-        <button
-          className={`btn btn-primary ${showingList ? "btn-soft" : ""}`}
-          onClick={() => setShowingList("suggestions")}
-          disabled
-        >
-          <Book className="w-4 h-4" />
-          Resources
-        </button>
-      )}
+
+            <div className="card bg-base-200 shadow-xl">
+              <div className="card-body text-center">
+                <div className="mx-auto mb-2">
+                  <Heart className="w-12 h-12 text-success" />
+                </div>
+                <h3 className="card-title justify-center mb-2">Open Source</h3>
+                <p className="text-base-content/70">
+                  Built with love by the community. Contribute, customize, and
+                  make it your own.
+                </p>
+              </div>
+            </div>
+
+            <div className="card bg-base-200 shadow-xl">
+              <div className="card-body text-center">
+                <div className="mx-auto mb-2">
+                  <Zap className="w-12 h-12 text-warning" />
+                </div>
+                <h3 className="card-title justify-center mb-2">
+                  Lightning Fast
+                </h3>
+                <p className="text-base-content/70">
+                  Built with modern technologies for speed and reliability. Get
+                  things done quickly and efficiently.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Second row - 2 centered cards */}
+          <div className="flex justify-center gap-8">
+            <div className="card bg-base-200 shadow-xl">
+              <div className="card-body text-center">
+                <div className="mx-auto mb-2">
+                  <TextSearch className="w-12 h-12 text-info" />
+                </div>
+                <h3 className="card-title justify-center mb-2">
+                  Scraped lists of internships
+                </h3>
+                <p className="text-base-content/70">
+                  Tracklication scrapes lists of internships from GitHub
+                  repositories to give you a comprehensive list of opportunities
+                  to apply to.
+                </p>
+              </div>
+            </div>
+            <div className="card bg-base-200 shadow-xl">
+              <div className="card-body text-center">
+                <div className="mx-auto mb-2">
+                  <Network className="w-12 h-12 text-error" />
+                </div>
+                <h3 className="card-title justify-center mb-2">
+                  Streamlined workflow
+                </h3>
+                <p className="text-base-content/70">
+                  Tracklication is designed to be a streamlined workflow for you
+                  to track your internships. Find, apply, and track, all in one
+                  place.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CTA Section */}
+      <div className="py-20 bg-gradient-to-r from-primary to-secondary">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-4xl font-bold text-primary-content mb-4">
+            Looking to contribute?
+          </h2>
+          <p className="text-xl text-primary-content/80 mb-8 max-w-2xl mx-auto">
+            Open source contributions are great to put on your resume. Make
+            connections, gain experience, and improve Tracklication by working
+            with us!
+          </p>
+          <a
+            href="https://github.com/gpossst/tracklication"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-outline btn-primary-content"
+          >
+            <FaGithub />
+            Learn how to contribute
+          </a>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer
+        id="about"
+        className="footer footer-center p-10 bg-base-200 text-base-content"
+      >
+        <div className="grid grid-flow-col gap-4">
+          <a href="#features" className="link link-hover">
+            Features
+          </a>
+          <a
+            href="https://github.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="link link-hover"
+          >
+            GitHub
+          </a>
+          <a href="#" className="link link-hover">
+            Documentation
+          </a>
+        </div>
+        <div>
+          <p className="font-bold text-lg">Tracklication</p>
+          <p className="text-sm">The open-source application tracker</p>
+          <p className="text-xs text-base-content/60">
+            © 2025 Tracklication. Made with ❤️ by developers, for developers.
+          </p>
+        </div>
+      </footer>
     </div>
+  );
+}
+
+function GoogleSignIn() {
+  const { signIn } = useAuthActions();
+  return (
+    <button
+      className="btn btn-primary btn-lg gap-2"
+      onClick={() => signIn("google")}
+    >
+      <FaGoogle />
+      Get started with Google
+    </button>
   );
 }

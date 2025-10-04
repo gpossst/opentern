@@ -46,8 +46,6 @@ export const GET = async (request: Request) => {
     products: ["0c90cf48-b881-43d4-8664-b9547fb1d4e9"],
   });
 
-  console.log(checkoutSession.url);
-
   if (!checkoutSession.url) {
     return new Response("Error creating checkout session", { status: 500 });
   }

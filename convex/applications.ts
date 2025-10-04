@@ -109,7 +109,7 @@ export const updateStatus = mutation({
 
     const updatedApplication = await ctx.db.patch(args.id, {
       status: args.status,
-      history: [...(application.history || []), args.status],
+      history: [application.status, ...(application.history || [])],
       lastUpdated: Date.now(),
     });
 
@@ -131,16 +131,92 @@ export const getSuggestedApplications = query({
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .collect();
 
-    const applicationsFromSuggestions = applications.filter(
-      (application) => application.suggestionId != null,
+    const applicationsFromOpportunities = applications.filter(
+      (application) => application.opportunityId != null,
     );
 
-    console.log("Applications from suggestions", applicationsFromSuggestions);
-
-    const suggestionIds = applicationsFromSuggestions.map(
-      (application) => application.suggestionId!,
+    const opportunityIds = applicationsFromOpportunities.map(
+      (application) => application.opportunityId!,
     );
 
-    return suggestionIds;
+    return opportunityIds;
+  },
+});
+
+export const deleteApplication = mutation({
+  args: {
+    id: v.id("applications"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new Error("Client is not authenticated!");
+    }
+
+    const application = await ctx.db.get(args.id);
+
+    if (application?.userId !== userId) {
+      throw new Error("Client is not authorized to delete this application!");
+    }
+
+    await ctx.db.delete(args.id);
+    return "success";
+  },
+  returns: v.string(),
+});
+
+export const changeStatusOrder = mutation({
+  args: {
+    id: v.id("applications"),
+    currentStatus: statusUnion,
+    history: v.array(statusUnion),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new Error("Client is not authenticated!");
+    }
+
+    const application = await ctx.db.get(args.id);
+    if (application?.userId !== userId) {
+      throw new Error("Client is not authorized to update this application!");
+    }
+
+    await ctx.db.patch(args.id, {
+      status: args.currentStatus,
+      history: args.history,
+    });
+  },
+});
+
+export const updateApplication = mutation({
+  args: {
+    id: v.id("applications"),
+    company: v.optional(v.string()),
+    title: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    link: v.optional(v.string()),
+    lastUpdated: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new Error("Client is not authenticated!");
+    }
+
+    const application = await ctx.db.get(args.id);
+    if (application?.userId !== userId) {
+      throw new Error("Client is not authorized to update this application!");
+    }
+
+    const updateData: any = {};
+    if (args.company !== undefined) updateData.company = args.company;
+    if (args.title !== undefined) updateData.title = args.title;
+    if (args.notes !== undefined) updateData.notes = args.notes;
+    if (args.link !== undefined) updateData.link = args.link;
+    updateData.lastUpdated = args.lastUpdated || Date.now();
+
+    await ctx.db.patch(args.id, updateData);
+    return "success";
   },
 });

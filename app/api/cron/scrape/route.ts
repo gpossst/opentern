@@ -76,9 +76,9 @@ export async function GET(request: Request) {
 
   const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
-  // Add vanshb03 suggestions
-  await convex.mutation(api.suggestions.addSuggestions, {
-    suggestions: vanshParsedData.internships.map((internship) => ({
+  // Add vanshb03 opportunities
+  await convex.mutation(api.opportunities.addOpportunities, {
+    opportunities: vanshParsedData.internships.map((internship) => ({
       company: internship.company,
       title: internship.title,
       location: internship.location,
@@ -88,9 +88,9 @@ export async function GET(request: Request) {
     source: vanshRepo.owner,
   });
 
-  // Add SimplifyJobs suggestions
-  await convex.mutation(api.suggestions.addSuggestions, {
-    suggestions: simplifyParsedData.internships.map((internship) => ({
+  // Add SimplifyJobs opportunities
+  await convex.mutation(api.opportunities.addOpportunities, {
+    opportunities: simplifyParsedData.internships.map((internship) => ({
       company: internship.company,
       title: internship.title,
       location: internship.location,
@@ -406,8 +406,7 @@ function parseSimplify(content: string) {
       /<a[^>]*href="([^"]*)"[^>]*>([^<]+)<\/a>/,
     );
     if (companyLinkMatch) {
-      // Company has a link - this is the application link
-      applicationLink = companyLinkMatch[1];
+      // Company has a link - extract company name only
       company = companyLinkMatch[2].trim();
     } else {
       // Company is just text
@@ -417,9 +416,16 @@ function parseSimplify(content: string) {
     title = removeEmojis(cells[1].replace(/<[^>]*>/g, "").trim());
     location = cells[2].replace(/<[^>]*>/g, "").trim();
 
-    // Check if 4th cell has application link (for vanshb03 format)
-    if (!applicationLink) {
-      const linkMatch = cells[3].match(/<a[^>]*href="([^"]*)"[^>]*>/);
+    // For Simplify format, prioritize the 4th cell for application link
+    // Look for the "Apply" button link in the div
+    const applyLinkMatch = cells[3].match(
+      /<a[^>]*href="([^"]*)"[^>]*>.*?Apply.*?<\/a>/,
+    );
+    if (applyLinkMatch) {
+      applicationLink = applyLinkMatch[1];
+    } else {
+      // Fallback: look for any link in the 4th cell
+      const linkMatch = cells[0].match(/<a[^>]*href="([^"]*)"[^>]*>/);
       if (linkMatch) {
         applicationLink = linkMatch[1];
       }

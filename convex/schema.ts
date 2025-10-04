@@ -35,9 +35,9 @@ export default defineSchema({
     link: v.optional(v.string()),
     dashboardLink: v.optional(v.string()),
     lastUpdated: v.optional(v.number()),
-    suggestionId: v.optional(v.id("suggestions")),
+    opportunityId: v.optional(v.id("opportunities")),
   }).index("by_userId", ["userId"]),
-  suggestions: defineTable({
+  opportunities: defineTable({
     company: v.string(),
     title: v.string(),
     link: v.optional(v.string()),
