@@ -12,7 +12,7 @@ export default {
   providers: [
     {
       domain: process.env.CONVEX_SITE_URL, // Site URL from environment variables
-      applicationID: "opentern", // Application identifier
+      applicationID: "convex", // Application identifier
     },
   ],
 };

@@ -1,5 +1,5 @@
 [] Test payments
-[] Billing page redirect
+[x] Billing page redirect
 [] Ads
 [x] Readme
 [x] Comments

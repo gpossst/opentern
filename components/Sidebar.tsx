@@ -63,7 +63,7 @@ export default function Sidebar() {
   // Handle payment button press for subscriptions
   const handleButtonPress = () => {
     setLoadingProButton(true);
-    fetch("/api/payment", {
+    fetch("/api/polar/payment", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -183,7 +183,7 @@ export default function Sidebar() {
               Account
             </h3>
             <li>
-              <Link href="/">
+              <Link href="/api/polar/billing">
                 <CreditCard className="w-4 h-4" />
                 Billing
               </Link>
