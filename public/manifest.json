@@ -1,0 +1,29 @@
+{
+  "name": "Opentern - Open Source Internship Application Tracker",
+  "short_name": "Opentern",
+  "description": "Track your internship applications with Opentern, the open-source application tracker. Organize applications by status, discover opportunities, and streamline your job search workflow.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["productivity", "utilities", "education"],
+  "lang": "en",
+  "dir": "ltr",
+  "scope": "/",
+  "id": "opentern-app"
+}

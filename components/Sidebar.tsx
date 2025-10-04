@@ -15,7 +15,7 @@ import {
 import Link from "next/link";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useConvexAuth, useAction, useQuery } from "convex/react";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { api } from "../convex/_generated/api";
 
 export default function Sidebar() {
@@ -51,7 +51,7 @@ export default function Sidebar() {
     })
       .then((res) => res.text())
       .then((data) => {
-        redirect(data);
+        window.location.href = data;
       })
       .finally(() => {
         setLoadingProButton(false);
@@ -92,14 +92,23 @@ export default function Sidebar() {
                 Home
               </Link>
             </li>
-            <li className="">
-              <Link href="/pricing" className="">
+            <li>
+              <button
+                className=""
+                onClick={() =>
+                  (
+                    document.getElementById(
+                      "ad_free_modal",
+                    ) as HTMLDialogElement
+                  )?.showModal()
+                }
+              >
                 <DollarSign className="w-4 h-4" />
-                Pricing
-              </Link>
+                Go ad-free
+              </button>
             </li>
             <li>
-              <a href="https://github.com/gpossst/tracklication">
+              <a href="https://github.com/gpossst/opentern">
                 <Github className="w-4 h-4" />
                 GitHub
               </a>
@@ -163,6 +172,81 @@ export default function Sidebar() {
         </ul>
       </div>
 
+      {/* Ad-Free Plan Dialog */}
+      <dialog id="ad_free_modal" className="modal">
+        <div className="modal-box max-w-md">
+          <div className="flex flex-col items-center text-center gap-6">
+            {/* Crown Icon */}
+            <div className="flex items-center justify-center w-16 h-16 bg-warning rounded-full">
+              <Crown className="w-8 h-8 text-base-100" />
+            </div>
+
+            {/* Title */}
+            <div>
+              <h3 className="font-bold text-2xl mb-2">Go Ad-Free</h3>
+              <p className="text-base-content/70">
+                Remove ads and support Tracklication development
+              </p>
+            </div>
+
+            {/* Features List */}
+            <div className="w-full">
+              <div className="bg-base-200 rounded-lg p-4 space-y-3">
+                <h4 className="font-semibold text-sm text-base-content/80 mb-3">
+                  Ad-free includes:
+                </h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="badge badge-success badge-sm">✓</div>
+                    <span>No advertisements</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="badge badge-success badge-sm">✓</div>
+                    <span>Priority support</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="badge badge-success badge-sm">✓</div>
+                    <span>Support the development team</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Pricing Info */}
+            <div className="bg-primary/10 rounded-lg p-4 w-full">
+              <div className="text-2xl font-bold text-primary mb-1">
+                $2/month
+              </div>
+              <div className="text-sm text-base-content/70">Cancel anytime</div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 w-full">
+              <form method="dialog" className="flex-1">
+                <button className="btn btn-outline w-full">Maybe Later</button>
+              </form>
+              <button
+                className="btn btn-primary w-full flex-1"
+                onClick={handleButtonPress}
+                disabled={loadingProButton}
+              >
+                {loadingProButton ? (
+                  <span className="loading loading-spinner loading-sm"></span>
+                ) : (
+                  <>
+                    Subscribe Now
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
+
       {/* Pro Feature Dialog */}
       <dialog id="pro_feature_modal" className="modal">
         <div className="modal-box max-w-md">
@@ -222,21 +306,20 @@ export default function Sidebar() {
               <form method="dialog" className="flex-1">
                 <button className="btn btn-outline w-full">Maybe Later</button>
               </form>
-              <Link href="/pricing" className="flex-1">
-                <button
-                  className="btn btn-primary w-full"
-                  onClick={() =>
-                    (
-                      document.getElementById(
-                        "pro_feature_modal",
-                      ) as HTMLDialogElement
-                    )?.close()
-                  }
-                >
-                  View Pricing
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </Link>
+              <button
+                className="btn btn-primary w-full flex-1"
+                onClick={handleButtonPress}
+                disabled={loadingProButton}
+              >
+                {loadingProButton ? (
+                  <span className="loading loading-spinner loading-sm"></span>
+                ) : (
+                  <>
+                    Subscribe Now
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
