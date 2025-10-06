@@ -352,7 +352,7 @@ const OpportunitiesFilter = memo(function OpportunitiesFilter({
       <div className="flex-col gap-2">
         <div className="relative flex-1" ref={dropdownRef}>
           <button
-            className="btn btn-soft btn-accent border w-full"
+            className="btn btn-secondary border w-full"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           >
             Company
