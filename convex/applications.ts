@@ -21,7 +21,7 @@ export const getApplications = query({
     const userId = await getAuthUserId(ctx);
 
     if (userId === null) {
-      throw new Error("Client is not authenticated!");
+      return [];
     }
 
     // Query applications belonging to the authenticated user
