@@ -188,8 +188,15 @@ export default function Sidebar() {
       {/* Clipboard import modal */}
       <dialog id="my_modal_2" className="modal">
         <div className="modal-box gap-4">
-          <div className="flex flex-row justify-between items-center mb-4">
-            <h3 className="font-bold text-lg">Import from clipboard</h3>
+          <div className="flex flex-row justify-between items-start mb-4">
+            <div className="flex flex-col gap-2">
+              <h3 className="font-bold text-lg">Import from clipboard</h3>
+              <h3 className="text-xs text-base-content/70">
+                Just <span className="kbd kbd-sm">ctrl + a</span> and{" "}
+                <span className="kbd kbd-sm">ctrl + c</span> inside of your
+                spreadsheet. We specifically expect Company and Title columns.
+              </h3>
+            </div>
             <form method="dialog">
               <button
                 className="btn btn-square btn-sm btn-error"
