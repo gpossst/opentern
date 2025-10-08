@@ -3,8 +3,6 @@ import React from "react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { FaGithub, FaGoogle } from "react-icons/fa";
 import { Heart, CheckCircle, Zap, TextSearch, Network } from "lucide-react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { PinIcon, ExternalLink } from "lucide-react";
@@ -106,12 +104,12 @@ export default function Home() {
         <header className="min-h-screen flex p-4">
           <div className="w-1/4 p-4 flex flex-col justify-between">
             <div className="flex flex-col items-center">
-              <Image
+              <img
                 src="/logo.png"
                 alt="Opentern"
-                width={250}
-                height={250}
-                className="mx-auto mb-6"
+                width={2099}
+                height={400}
+                className="m-4 w-4/5"
               />
               <p className="text-secondary-content font-bold text-lg">
                 The open-source Software Engineering internship application
@@ -309,15 +307,10 @@ export default function Home() {
  */
 function GoogleSignIn() {
   const { signIn } = useAuthActions();
-  const router = useRouter();
   return (
     <button
       className="btn btn-primary btn-lg gap-2"
-      onClick={() =>
-        signIn("google").then(() => {
-          router.push("/dashboard");
-        })
-      }
+      onClick={() => signIn("google", { redirectTo: "/dashboard" })}
     >
       <FaGoogle />
       Get started with Google
