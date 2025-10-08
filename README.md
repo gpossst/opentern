@@ -383,7 +383,7 @@ We're always looking for ways to improve Opentern and help more students find th
 
 Please get in touch with us! We'd love to discuss how we can work together to make internship tracking even better for students and developers.
 
-**Contact**: Reach out through [GitHub Issues](https://github.com/gpossst/opentern/issues) or [Twitter](https://twitter.com/opentern) to start the conversation.
+**Contact**: Reach out through [GitHub Issues](https://github.com/gpossst/opentern/issues) or [Twitter](https://twitter.com/imgarrettpost) to start the conversation.
 
 ## 📄 License
 
