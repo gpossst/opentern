@@ -192,9 +192,10 @@ export default function Sidebar() {
             <div className="flex flex-col gap-2">
               <h3 className="font-bold text-lg">Import from clipboard</h3>
               <h3 className="text-xs text-base-content/70">
-                Just <span className="kbd kbd-sm">ctrl + a</span> and{" "}
-                <span className="kbd kbd-sm">ctrl + c</span> inside of your
-                spreadsheet. We specifically expect Company and Title columns.
+                Just <span className="kbd kbd-sm kbd-primary">ctrl + a</span>{" "}
+                and <span className="kbd kbd-sm kbd-primary">ctrl + c</span>{" "}
+                inside of your spreadsheet. We specifically expect Company and
+                Title columns.
               </h3>
             </div>
             <form method="dialog">
