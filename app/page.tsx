@@ -101,36 +101,36 @@ export default function Home() {
       />
       <div className="min-h-screen bg-gradient-to-br from-base-100 to-base-300">
         {/* Hero section with main value proposition and authentication */}
-        <header className="min-h-screen flex p-4">
-          <div className="w-1/4 p-4 flex flex-col justify-between">
+        <header className="min-h-screen flex flex-col lg:flex-row p-4">
+          <div className="w-full lg:w-1/4 p-4 flex flex-col justify-between">
             <div className="flex flex-col items-center">
               <img
                 src="/logo.png"
                 alt="Opentern"
                 width={2099}
                 height={400}
-                className="m-4 w-4/5"
+                className="m-4 w-full max-w-sm lg:w-4/5"
               />
-              <p className="text-secondary-content font-bold text-lg">
+              <p className="text-secondary-content font-bold text-base lg:text-lg text-center">
                 The completely free and open-source Software Engineering
                 internship application tracker for developers and students.
               </p>
             </div>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 mt-8 lg:mt-0">
               <button
-                className={`btn btn-lg btn-secondary text-white btn-soft w-full ${currentSlide === 0 ? "btn-active" : ""}`}
+                className={`btn btn-sm lg:btn-lg btn-secondary text-white btn-soft w-full ${currentSlide === 0 ? "btn-active" : ""}`}
                 onClick={() => handleSlideClick(0)}
               >
                 Discover opportunities
               </button>
               <button
-                className={`btn btn-lg btn-secondary text-white btn-soft w-full ${currentSlide === 1 ? "btn-active" : ""}`}
+                className={`btn btn-sm lg:btn-lg btn-secondary text-white btn-soft w-full ${currentSlide === 1 ? "btn-active" : ""}`}
                 onClick={() => handleSlideClick(1)}
               >
                 Track your applications
               </button>
               <button
-                className={`btn btn-lg btn-secondary text-white btn-soft w-full ${currentSlide === 2 ? "btn-active" : ""}`}
+                className={`btn btn-sm lg:btn-lg btn-secondary text-white btn-soft w-full ${currentSlide === 2 ? "btn-active" : ""}`}
                 onClick={() => handleSlideClick(2)}
               >
                 Grow your skills
@@ -303,7 +303,7 @@ function GoogleSignIn() {
   const { signIn } = useAuthActions();
   return (
     <button
-      className="btn btn-primary btn-lg gap-2"
+      className="btn btn-primary btn-sm lg:btn-lg gap-2"
       onClick={() => signIn("google", { redirectTo: "/dashboard" })}
     >
       <FaGoogle />
@@ -377,7 +377,7 @@ function HeroCarousel({ currentSlide }: { currentSlide: number }) {
     </div>,
   ];
   return (
-    <div className="w-3/4 bg-base-200 rounded-xl shadow-xl border border-base-300 overflow-hidden carousel-container">
+    <div className="w-full lg:w-3/4 bg-base-200 rounded-xl shadow-xl border border-base-300 overflow-hidden carousel-container h-96 lg:h-auto">
       {slides.map((slide, index) => (
         <div
           key={index}
