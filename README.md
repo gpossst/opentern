@@ -10,7 +10,7 @@
 
 ## 🎯 Mission
 
-Opentern is designed to streamline the internship application process for developers and students. We believe that tracking applications shouldn't be complicated or expensive. Our mission is to provide a powerful, open-source solution that helps you:
+Opentern is designed to streamline the internship application process for developers and students. We believe that tracking applications shouldn't be complicated or expensive. Our mission is to provide a powerful, completely free, open-source solution that helps you:
 
 - **Organize** your internship applications efficiently
 - **Discover** new opportunities automatically
@@ -48,6 +48,7 @@ Opentern is designed to streamline the internship application process for develo
 - **User-specific data** isolation
 - **No data sharing** with third parties
 - **Open source** - you own your data
+- **Completely free** - no subscriptions or payments required
 
 ### 🎨 Modern UI/UX
 
@@ -143,7 +144,6 @@ Opentern is designed to streamline the internship application process for develo
 
 - **Google OAuth** - User authentication
 - **GitHub API** - Opportunity scraping
-- **Polar** - Payment processing (optional)
 
 ### Development Tools
 
@@ -157,9 +157,7 @@ Opentern is designed to streamline the internship application process for develo
 opentern/
 ├── app/                    # Next.js App Router
 │   ├── api/               # API routes
-│   │   ├── cron/scrape/   # Automated scraping endpoint
-│   │   ├── payment/       # Payment processing
-│   │   └── webhook/       # Webhook handlers
+│   │   └── cron/scrape/   # Automated scraping endpoint
 │   ├── dashboard/         # Main application dashboard
 │   ├── globals.css        # Global styles
 │   ├── layout.tsx         # Root layout
@@ -254,14 +252,13 @@ We welcome contributions from the community! Here's how you can help:
 
 ### Environment Variables
 
-| Variable                 | Description                    | Required |
-| ------------------------ | ------------------------------ | -------- |
-| `NEXT_PUBLIC_CONVEX_URL` | Your Convex deployment URL     | Yes      |
-| `CONVEX_DEPLOY_KEY`      | Convex deployment key          | Yes      |
-| `GOOGLE_CLIENT_ID`       | Google OAuth client ID         | Yes      |
-| `GOOGLE_CLIENT_SECRET`   | Google OAuth client secret     | Yes      |
-| `GITHUB_TOKEN`           | GitHub API token for scraping  | Yes      |
-| `POLAR_ACCESS_TOKEN`     | Polar payment token (optional) | No       |
+| Variable                 | Description                   | Required |
+| ------------------------ | ----------------------------- | -------- |
+| `NEXT_PUBLIC_CONVEX_URL` | Your Convex deployment URL    | Yes      |
+| `CONVEX_DEPLOY_KEY`      | Convex deployment key         | Yes      |
+| `GOOGLE_CLIENT_ID`       | Google OAuth client ID        | Yes      |
+| `GOOGLE_CLIENT_SECRET`   | Google OAuth client secret    | Yes      |
+| `GITHUB_TOKEN`           | GitHub API token for scraping | Yes      |
 
 ### Convex Setup
 
@@ -361,6 +358,7 @@ Opentern automatically scrapes internship opportunities from popular GitHub repo
 - [ ] Improve mobile responsiveness
 - [ ] Add application analytics
 - [ ] Implement bulk operations
+- [ ] Add sponsor recommendations section
 
 ### Long Term
 
@@ -374,6 +372,18 @@ Opentern automatically scrapes internship opportunities from popular GitHub repo
 - **GitHub Discussions**: Ask questions and share ideas
 - **Discord**: Join our community chat
 - **Twitter**: Follow for updates [@opentern](https://twitter.com/opentern)
+
+## 💼 Sponsorship Opportunities
+
+We're always looking for ways to improve Opentern and help more students find their dream internships. If you're a company or organization that would like to:
+
+- **Feature your product** in our recommendation section
+- **Sponsor development** of new features
+- **Partner** with us to reach the developer community
+
+Please get in touch with us! We'd love to discuss how we can work together to make internship tracking even better for students and developers.
+
+**Contact**: Reach out through [GitHub Issues](https://github.com/gpossst/opentern/issues) or [Twitter](https://twitter.com/opentern) to start the conversation.
 
 ## 📄 License
 
