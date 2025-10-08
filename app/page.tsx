@@ -264,10 +264,7 @@ export default function Home() {
         </section>
 
         {/* Footer */}
-        <footer
-          id="about"
-          className="footer footer-center p-10 bg-base-100 text-base-content"
-        >
+        <footer id="about" className="footer footer-center p-10">
           <div className="grid grid-flow-col gap-4">
             <a href="#features" className="link link-hover">
               Features
@@ -279,9 +276,6 @@ export default function Home() {
               className="link link-hover"
             >
               GitHub
-            </a>
-            <a href="#" className="link link-hover">
-              Documentation
             </a>
           </div>
           <div>
@@ -373,7 +367,13 @@ function HeroCarousel({ currentSlide }: { currentSlide: number }) {
           prepared for interviews, and improve your resume
         </p>
       </div>
-      <div className="flex-1 overflow-y-auto p-4 space-y-3"></div>
+      <div className="flex-1 items-center justify-center flex font-sans text-6xl font-black">
+        <TypewriterText
+          text="Coming soon..."
+          speed={400}
+          className="text-center"
+        />
+      </div>
     </div>,
   ];
   return (
@@ -588,3 +588,39 @@ const ApplicationListItem = ({
     </div>
   );
 };
+
+/**
+ * TypewriterText component that displays text with a typewriter effect
+ * @param text - The text to display
+ * @param speed - Typing speed in milliseconds per character (default: 100)
+ * @param className - Additional CSS classes
+ * @returns JSX element with typewriter effect
+ */
+function TypewriterText({
+  text,
+  speed = 200,
+  className = "",
+}: {
+  text: string;
+  speed?: number;
+  className?: string;
+}) {
+  const [displayedText, setDisplayedText] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDisplayedText(text.substring(0, currentIndex + 1));
+      setCurrentIndex((prev) => (prev + 1) % text.length);
+    }, speed);
+
+    return () => clearTimeout(timer);
+  }, [currentIndex, text, speed]);
+
+  return (
+    <span className={className}>
+      {displayedText}
+      <span className="animate-pulse text-7xl">|</span>
+    </span>
+  );
+}
