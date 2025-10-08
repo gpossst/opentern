@@ -35,16 +35,27 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-1 h-screen p-8">
-      {/* Main content area - displays either applications or opportunities */}
-      <div className="flex-1 items-center justify-center">
-        {view === "list" ? <ApplicationList /> : <OpportunitiesList />}
-      </div>
-      {/* Sidebar for nav/import/account functionality */}
-      <Sidebar />
-      {/* View toggle controls positioned on the right */}
-      <div className="ml-auto">
-        <ViewToggle showingList={view === "list"} setShowingList={setView} />
-      </div>
+      {isAuthenticated && !isLoading ? (
+        <>
+          {/* Main content area - displays either applications or opportunities */}
+          <div className="flex-1 items-center justify-center">
+            {view === "list" ? <ApplicationList /> : <OpportunitiesList />}
+          </div>
+          {/* Sidebar for nav/import/account functionality */}
+          <Sidebar />
+          {/* View toggle controls positioned on the right */}
+          <div className="ml-auto">
+            <ViewToggle
+              showingList={view === "list"}
+              setShowingList={setView}
+            />
+          </div>
+        </>
+      ) : (
+        <div className="w-full flex justify-center items-center h-screen">
+          <span className="loading loading-dots loading-xl"></span>
+        </div>
+      )}
     </div>
   );
 }
