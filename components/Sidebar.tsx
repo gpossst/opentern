@@ -10,7 +10,6 @@ import {
 import Link from "next/link";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useConvexAuth, useAction } from "convex/react";
-import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import Image from "next/image";
 
@@ -80,7 +79,9 @@ export default function Sidebar() {
             <Image
               src="/logo.png"
               alt="logo"
-              className="h-8 w-auto object-contain mb-4"
+              width={100}
+              height={100}
+              className="h-8 w-auto object-contain my-4"
             />
             <h3 className="text-sm font-semibold text-base-content/70 uppercase tracking-wide">
               Navigation
@@ -237,24 +238,24 @@ export default function Sidebar() {
  *
  * Features:
  * - Only shows when user is authenticated
- * - Signs out user and redirects to home page
+ * - Signs out user (middleware handles redirect)
  *
  * @returns {JSX.Element} Sign out button or null
  */
 function SignOutButton() {
   const { isAuthenticated } = useConvexAuth();
   const { signOut } = useAuthActions();
-  const router = useRouter();
+
   return (
     <>
       {isAuthenticated && (
         <button
           className="btn btn-sm btn-primary"
-          onClick={() =>
-            void signOut().then(() => {
-              router.push("/");
-            })
-          }
+          onClick={() => {
+            signOut();
+            // Force a page refresh to trigger middleware redirect
+            window.location.href = "/";
+          }}
         >
           Sign out
         </button>

@@ -27,8 +27,8 @@ export default function Dashboard() {
   // Show loader while authentication is being verified
   if (isLoading) {
     return (
-      <div className="w-full flex justify-center items-center">
-        <span className="loading loading-dots loading-sm"></span>
+      <div className="w-full flex justify-center items-center h-screen">
+        <span className="loading loading-dots loading-xl"></span>
       </div>
     );
   }
