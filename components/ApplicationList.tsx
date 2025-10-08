@@ -109,7 +109,7 @@ export default function ApplicationList() {
           ) : filteredApplications.length === 0 ? (
             // Show message when no results found
             <div className="p-4 text-center max-w-sm mx-auto text-secondary-content h-full flex justify-center items-center">
-              You haven't listed any applications yet! Switch to the
+              You haven&apos;t listed any applications yet! Switch to the
               opportunities view to find some, or import existing ones from the
               sidebar.
             </div>
