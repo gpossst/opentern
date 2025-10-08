@@ -112,8 +112,8 @@ export default function Home() {
                 className="m-4 w-4/5"
               />
               <p className="text-secondary-content font-bold text-lg">
-                The open-source Software Engineering internship application
-                tracker for developers and students.
+                The completely free and open-source Software Engineering
+                internship application tracker for developers and students.
               </p>
             </div>
             <div className="flex flex-col gap-4">
