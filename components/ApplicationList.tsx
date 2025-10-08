@@ -278,7 +278,6 @@ function ApplicationInput() {
   // State for dynamic input sizing
   const [hovered, setHovered] = useState("");
   // Error state for form validation
-  const [error, setError] = useState<string | null>(null);
   // Mutation for creating new applications
   const createApplication = useMutation(api.applications.createApplication);
 
@@ -291,19 +290,16 @@ function ApplicationInput() {
 
   const handleSubmit = async () => {
     let parsed;
-    setError(null);
 
     try {
       parsed = formInfoSchema.parse(formInfo);
-    } catch (error) {
-      setError("Invalid form info");
+    } catch {
       return;
     }
 
     await createApplication({
       ...parsed,
     });
-    setError(null);
     setFormInfo({
       company: "",
       title: "",

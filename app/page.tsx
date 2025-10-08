@@ -169,8 +169,8 @@ export default function Home() {
                   </h3>
                   <p className="text-base-content/70">
                     Organize your internship applications by status, company, or
-                    priority. Never lose track of where you've applied with our
-                    intuitive tracking system.
+                    priority. Never lose track of where you&apos;ve applied with
+                    our intuitive tracking system.
                   </p>
                 </div>
               </article>
@@ -333,7 +333,7 @@ function HeroCarousel({ currentSlide }: { currentSlide: number }) {
     },
   });
   const slides = [
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" key="discover">
       <div className="p-6 border-b border-base-300">
         <h3 className="text-xl font-semibold text-base-content mb-2">
           Discover Opportunities
@@ -352,7 +352,7 @@ function HeroCarousel({ currentSlide }: { currentSlide: number }) {
         ))}
       </div>
     </div>,
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" key="track">
       <div className="p-6 border-b border-base-300">
         <h3 className="text-xl font-semibold text-base-content mb-2">
           Track Your Applications
@@ -370,7 +370,7 @@ function HeroCarousel({ currentSlide }: { currentSlide: number }) {
         ))}
       </div>
     </div>,
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" key="grow">
       <div className="p-6 border-b border-base-300">
         <h3 className="text-xl font-semibold text-base-content mb-2">
           Grow Your Skills
@@ -461,7 +461,9 @@ function OpportunityPreviewItem({
 // Fake application data for demonstration
 const fakeApplications = [
   {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     _id: "fake1" as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     userId: "fake-user" as any,
     company: "Google",
     title: "Software Engineering Intern",
@@ -470,7 +472,9 @@ const fakeApplications = [
     _creationTime: Date.now(),
   },
   {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     _id: "fake2" as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     userId: "fake-user" as any,
     company: "Microsoft",
     title: "Frontend Developer Intern",
@@ -479,7 +483,9 @@ const fakeApplications = [
     _creationTime: Date.now(),
   },
   {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     _id: "fake3" as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     userId: "fake-user" as any,
     company: "Meta",
     title: "Full Stack Intern",
@@ -488,7 +494,9 @@ const fakeApplications = [
     _creationTime: Date.now(),
   },
   {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     _id: "fake4" as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     userId: "fake-user" as any,
     company: "Apple",
     title: "iOS Developer Intern",
@@ -497,7 +505,9 @@ const fakeApplications = [
     _creationTime: Date.now(),
   },
   {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     _id: "fake5" as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     userId: "fake-user" as any,
     company: "Netflix",
     title: "Backend Engineer Intern",

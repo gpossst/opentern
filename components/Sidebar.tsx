@@ -9,9 +9,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useConvexAuth, useAction, useQuery } from "convex/react";
+import { useConvexAuth, useAction } from "convex/react";
 import { useRouter } from "next/navigation";
-import { api } from "../convex/_generated/api";
+import { api } from "@/convex/_generated/api";
 import Image from "next/image";
 
 /**
@@ -34,14 +34,12 @@ export default function Sidebar() {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   // State for payment button loading
-  const [loadingProButton, setLoadingProButton] = useState(false);
   // Get current user data
-  const user = useQuery(api.users.getUser);
   // Action for importing text data
   const importFromText = useAction(api.import.importFromText);
 
   // Handle file import (currently not implemented)
-  const handleFileImport = async (modalId: string) => {
+  const handleFileImport = async () => {
     if (!importFile) return;
   };
 
@@ -177,7 +175,7 @@ export default function Sidebar() {
             <button
               className="btn btn-success w-full btn-soft"
               disabled={!importFile}
-              onClick={() => handleFileImport("my_modal_1")}
+              onClick={() => handleFileImport()}
             >
               Import
             </button>

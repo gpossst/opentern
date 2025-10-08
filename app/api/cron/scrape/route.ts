@@ -56,7 +56,7 @@ const repos: Repo[] = [
  * @param request - HTTP request object
  * @returns JSON response with scraping results
  */
-export async function GET(request: Request) {
+export async function GET() {
   // Initialize GitHub API client with authentication token
   const octokit = new Octokit({
     auth: process.env.GITHUB_TOKEN,
@@ -194,25 +194,11 @@ function removeEmojis(text: string): string {
  * @returns Parsed internship data with metadata
  */
 function parseVansh(content: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const internships: any[] = [];
-  let currentSection = "";
 
   // Split content into lines for section detection
   const lines = content.split("\n");
-
-  // Find section headers first
-  for (const line of lines) {
-    const trimmedLine = line.trim();
-    if (
-      trimmedLine.startsWith("### ") &&
-      trimmedLine.includes("Internship Roles")
-    ) {
-      currentSection = trimmedLine
-        .replace("### ", "")
-        .replace(" Internship Roles", "");
-      break;
-    }
-  }
 
   // Parse HTML table rows - handle 5-column table structure
   const tableRowRegex5 =
@@ -326,14 +312,6 @@ function parseVansh(content: string) {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
 
-      // Detect section headers in markdown format
-      if (line.startsWith("### ") && line.includes("Internship Roles")) {
-        currentSection = line
-          .replace("### ", "")
-          .replace(" Internship Roles", "");
-        continue;
-      }
-
       // Detect markdown table rows (lines starting with | and containing |)
       if (line.startsWith("|") && line.includes("|") && !line.includes("---")) {
         const cells = line
@@ -446,32 +424,12 @@ function parseVansh(content: string) {
  * @returns Parsed internship data with metadata
  */
 function parseSimplify(content: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const internships: any[] = [];
-  let currentSection = "";
-
-  // Split content into lines for section detection
-  const lines = content.split("\n");
-
-  // Find section headers first
-  for (const line of lines) {
-    const trimmedLine = line.trim();
-    if (
-      trimmedLine.startsWith("### ") &&
-      trimmedLine.includes("Internship Roles")
-    ) {
-      currentSection = trimmedLine
-        .replace("### ", "")
-        .replace(" Internship Roles", "");
-      break;
-    }
-  }
 
   // Parse HTML table rows - handle both 5-column and 6-column table structures
   const tableRowRegex5 =
     /<tr>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>(.*?)<\/td>\s*<\/tr>/g;
-  const tableRowRegex6 =
-    /<tr>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>(.*?)<\/td>\s*<\/tr>/g;
-
   let lastCompany = "";
 
   // Try 5-column format first (SimplifyJobs format)

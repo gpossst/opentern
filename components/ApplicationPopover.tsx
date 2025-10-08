@@ -50,7 +50,12 @@ export default function ApplicationPopover({
           company?: string | undefined,
           title?: string | undefined,
         ) => {
-          const updateData: any = {};
+          const updateData: {
+            notes?: string;
+            link?: string;
+            company?: string;
+            title?: string;
+          } = {};
           if (notes !== undefined) updateData.notes = notes;
           if (link !== undefined) updateData.link = link;
           if (company !== undefined) updateData.company = company;

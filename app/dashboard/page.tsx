@@ -1,7 +1,6 @@
 "use client";
 
-import { useConvexAuth, useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { useConvexAuth } from "convex/react";
 import { useState } from "react";
 import { TextAlignJustify, Book, Sprout } from "lucide-react";
 import ApplicationList from "@/components/ApplicationList";
@@ -69,9 +68,6 @@ function ViewToggle({
   showingList: boolean;
   setShowingList: (view: string) => void;
 }) {
-  // Get current user data (though not used in current implementation)
-  const user = useQuery(api.users.getUser);
-
   return (
     <div className="flex flex-col gap-2 max-w-xs">
       <h2 className="text-lg font-semibold">View</h2>
