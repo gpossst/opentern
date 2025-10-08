@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     siteName: "Opentern",
     images: [
       {
-        url: "/logo.png",
+        url: "/1200x630-OG.png",
         width: 1200,
         height: 630,
         alt: "Opentern | Apply Open Source",
@@ -76,7 +76,7 @@ export const metadata: Metadata = {
     title: "Opentern | Apply Open Source",
     description:
       "Track your internship applications with Opentern, the open-source application tracker. Organize applications by status, discover opportunities, and streamline your job search workflow.",
-    images: ["/logo.png"],
+    images: ["/1200x630-OG.png"],
     creator: "@opentern",
   },
   // Search engine crawling and indexing configuration
