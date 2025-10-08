@@ -22,10 +22,10 @@ export default function Dashboard() {
   // State to track which view is currently active (list, opportunities, resources)
   const [view, setView] = useState("list");
   // Authentication state from Convex
-  const { isLoading } = useConvexAuth();
+  const { isLoading, isAuthenticated } = useConvexAuth();
 
   // Show loader while authentication is being verified
-  if (isLoading) {
+  if (isLoading || !isAuthenticated) {
     return (
       <div className="w-full flex justify-center items-center h-screen">
         <span className="loading loading-dots loading-xl"></span>

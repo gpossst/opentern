@@ -12,6 +12,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { useConvexAuth, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 /**
  * Sidebar component - provides navigation, import functionality, and account management.
@@ -245,16 +246,16 @@ export default function Sidebar() {
 function SignOutButton() {
   const { isAuthenticated } = useConvexAuth();
   const { signOut } = useAuthActions();
-
+  const router = useRouter();
   return (
     <>
       {isAuthenticated && (
         <button
           className="btn btn-sm btn-primary"
           onClick={() => {
-            signOut();
-            // Force a page refresh to trigger middleware redirect
-            window.location.href = "/";
+            signOut().then(() => {
+              router.push("/");
+            });
           }}
         >
           Sign out
