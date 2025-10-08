@@ -206,7 +206,7 @@ export default function Home() {
             </div>
 
             {/* Secondary feature cards - discovery and workflow */}
-            <div className="flex justify-center gap-8">
+            <div className="flex flex-col lg:flex-row justify-center gap-8">
               <article className="card bg-base-200 shadow-xl">
                 <div className="card-body text-center">
                   <div className="mx-auto mb-2">
