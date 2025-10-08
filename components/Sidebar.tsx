@@ -4,10 +4,6 @@ import {
   File,
   ClipboardPaste,
   X,
-  Crown,
-  ArrowRight,
-  CreditCard,
-  DollarSign,
   House,
   Github,
 } from "lucide-react";
@@ -16,6 +12,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { useConvexAuth, useAction, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { api } from "../convex/_generated/api";
+import Image from "next/image";
 
 /**
  * Sidebar component - provides navigation, import functionality, and account management.
@@ -60,24 +57,6 @@ export default function Sidebar() {
     }
   };
 
-  // Handle payment button press for subscriptions
-  const handleButtonPress = () => {
-    setLoadingProButton(true);
-    fetch("/api/polar/payment", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((res) => res.text())
-      .then((data) => {
-        window.location.href = data;
-      })
-      .finally(() => {
-        setLoadingProButton(false);
-      });
-  };
-
   return (
     <div className="drawer fixed bottom-4 left-4 z-50">
       <input id="my-drawer" type="checkbox" className="drawer-toggle" />
@@ -100,8 +79,8 @@ export default function Sidebar() {
         <ul className="menu bg-base-200 text-base-content min-h-full w-80 max-w-[calc(100vw-2rem)] p-4 flex flex-col">
           {/* Navigation section */}
           <div className="flex flex-col gap-2">
-            <img
-              src="/wordface.png"
+            <Image
+              src="/logo.png"
               alt="logo"
               className="h-8 w-auto object-contain mb-4"
             />
@@ -113,21 +92,6 @@ export default function Sidebar() {
                 <House className="w-4 h-4" />
                 Home
               </Link>
-            </li>
-            <li>
-              <button
-                className=""
-                onClick={() =>
-                  (
-                    document.getElementById(
-                      "ad_free_modal",
-                    ) as HTMLDialogElement
-                  )?.showModal()
-                }
-              >
-                <DollarSign className="w-4 h-4" />
-                Go ad-free
-              </button>
             </li>
             <li>
               <a href="https://github.com/gpossst/opentern">
@@ -176,180 +140,11 @@ export default function Sidebar() {
             </li>
           </div>
 
-          {/* Account section */}
-          <div className="divider my-4 mt-auto"></div>
-          <div className="flex flex-col gap-2">
-            <h3 className="text-sm font-semibold text-base-content/70 uppercase tracking-wide">
-              Account
-            </h3>
-            <li>
-              <Link href="/api/polar/billing">
-                <CreditCard className="w-4 h-4" />
-                Billing
-              </Link>
-            </li>
-            <li className="mt-auto">
-              <SignOutButton />
-            </li>
-          </div>
+          <li className="mt-auto">
+            <SignOutButton />
+          </li>
         </ul>
       </div>
-
-      {/* Ad-free subscription modal */}
-      <dialog id="ad_free_modal" className="modal">
-        <div className="modal-box max-w-md">
-          <div className="flex flex-col items-center text-center gap-6">
-            {/* Crown icon */}
-            <div className="flex items-center justify-center w-16 h-16 bg-warning rounded-full">
-              <Crown className="w-8 h-8 text-base-100" />
-            </div>
-
-            {/* Modal title and description */}
-            <div>
-              <h3 className="font-bold text-2xl mb-2">Go Ad-Free</h3>
-              <p className="text-base-content/70">
-                Remove ads and support Tracklication development
-              </p>
-            </div>
-
-            {/* Features list */}
-            <div className="w-full">
-              <div className="bg-base-200 rounded-lg p-4 space-y-3">
-                <h4 className="font-semibold text-sm text-base-content/80 mb-3">
-                  Ad-free includes:
-                </h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="badge badge-success badge-sm">✓</div>
-                    <span>No advertisements</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="badge badge-success badge-sm">✓</div>
-                    <span>Priority support</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="badge badge-success badge-sm">✓</div>
-                    <span>Support the development team</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Pricing information */}
-            <div className="bg-primary/10 rounded-lg p-4 w-full">
-              <div className="text-2xl font-bold text-primary mb-1">
-                $2/month
-              </div>
-              <div className="text-sm text-base-content/70">Cancel anytime</div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex gap-3 w-full">
-              <form method="dialog" className="flex-1">
-                <button className="btn btn-outline w-full">Maybe Later</button>
-              </form>
-              <button
-                className="btn btn-primary w-full flex-1"
-                onClick={handleButtonPress}
-                disabled={loadingProButton}
-              >
-                {loadingProButton ? (
-                  <span className="loading loading-spinner loading-sm"></span>
-                ) : (
-                  <>
-                    Subscribe Now
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-        <form method="dialog" className="modal-backdrop">
-          <button>close</button>
-        </form>
-      </dialog>
-
-      {/* Pro feature promotion modal */}
-      <dialog id="pro_feature_modal" className="modal">
-        <div className="modal-box max-w-md">
-          <div className="flex flex-col items-center text-center gap-6">
-            {/* Crown icon */}
-            <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full">
-              <Crown className="w-8 h-8 text-primary" />
-            </div>
-
-            {/* Modal title and description */}
-            <div>
-              <h3 className="font-bold text-2xl mb-2">Pro Feature</h3>
-              <p className="text-base-content/70">
-                Import functionality is available with our Pro plan
-              </p>
-            </div>
-
-            {/* Features list */}
-            <div className="w-full">
-              <div className="bg-base-200 rounded-lg p-4 space-y-3">
-                <h4 className="font-semibold text-sm text-base-content/80 mb-3">
-                  Pro includes:
-                </h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="badge badge-success badge-sm">✓</div>
-                    <span>Import from clipboard</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="badge badge-success badge-sm">✓</div>
-                    <span>Import from file (coming soon)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="badge badge-success badge-sm">✓</div>
-                    <span>Opportunities</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="badge badge-success badge-sm">✓</div>
-                    <span>Support for the team</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Pricing information */}
-            <div className="bg-primary/10 rounded-lg p-4 w-full">
-              <div className="text-2xl font-bold text-primary mb-1">
-                $1/month
-              </div>
-              <div className="text-sm text-base-content/70">
-                Start your free trial today
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex gap-3 w-full">
-              <form method="dialog" className="flex-1">
-                <button className="btn btn-outline w-full">Maybe Later</button>
-              </form>
-              <button
-                className="btn btn-primary w-full flex-1"
-                onClick={handleButtonPress}
-                disabled={loadingProButton}
-              >
-                {loadingProButton ? (
-                  <span className="loading loading-spinner loading-sm"></span>
-                ) : (
-                  <>
-                    Subscribe Now
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-        <form method="dialog" className="modal-backdrop">
-          <button>close</button>
-        </form>
-      </dialog>
 
       {/* File import modal */}
       <dialog id="my_modal_1" className="modal">

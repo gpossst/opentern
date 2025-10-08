@@ -94,7 +94,7 @@ export const metadata: Metadata = {
   // Favicon and app icon configuration
   icons: {
     icon: [
-      { url: "/convex.svg", sizes: "any" },
+      { url: "/opentern.png", sizes: "any" },
       { url: "/logo.png", sizes: "32x32", type: "image/png" },
     ],
     apple: [{ url: "/logo.png", sizes: "180x180", type: "image/png" }],

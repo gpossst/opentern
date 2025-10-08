@@ -15,7 +15,6 @@
     "@ai-sdk/groq": "^2.0.19",
     "@ai-sdk/react": "^2.0.44",
     "@convex-dev/auth": "^0.0.81",
-    "@polar-sh/nextjs": "^0.4.7",
     "@tanstack/react-virtual": "^3.13.12",
     "ai": "^5.0.44",
     "convex": "^1.27.0",

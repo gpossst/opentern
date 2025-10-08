@@ -99,9 +99,6 @@ Opentern is designed to streamline the internship application process for develo
 
    # GitHub API (for scraping)
    GITHUB_TOKEN=your_github_token
-
-   # Optional: Polar for payments
-   POLAR_ACCESS_TOKEN=your_polar_token
    ```
 
 4. **Set up Convex**
